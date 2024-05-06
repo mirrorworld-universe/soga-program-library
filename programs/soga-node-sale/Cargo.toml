@@ -1,0 +1,22 @@
+[package]
+name = "soga-node-sale"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "soga_node_sale"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
+anchor-spl = {version = "0.29.0", features = ["metadata"]}
+mpl-token-metadata = { version = "4.1.0", features = [] }
+pyth-sdk-solana = { version = "0.10.1", features = [] }
