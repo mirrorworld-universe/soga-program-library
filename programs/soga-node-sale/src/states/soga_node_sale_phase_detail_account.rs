@@ -27,11 +27,15 @@ pub struct SogaNodeSalePhaseDetailAccount {
 
     pub buy_enable: bool,
 
+    pub buy_with_token_enable: bool,
+
     pub airdrop_enable: bool,
 
     pub total_mint: u64,
 
     pub total_buy: u64,
+
+    pub total_buy_with_token: u64,
 
     pub total_airdrop: u64,
 
@@ -56,9 +60,11 @@ impl SogaNodeSalePhaseDetailAccount {
             + 4 // total_initialize_tiers
             + 4 // total_completed_tiers
             + 1 // buy_enable
+            + 1 // buy_with_token_enable
             + 1 // airdrop_enable
             + 8 // total_mint
             + 8 // total_buy
+            + 8 // total_buy_with_token
             + 8 // total_airdrop
             + 20 // name
             + 20 // symbol

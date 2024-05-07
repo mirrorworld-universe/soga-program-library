@@ -38,11 +38,17 @@ pub enum SogaNodeSaleError {
     #[msg("Phase buy is disable")]
     PhaseBuyIsDisable,
 
+    #[msg("Phase buy with token is disable")]
+    PhaseBuyWithTokenIsDisable,
+
     #[msg("Phase airdrop is disable")]
     PhaseAirdropIsDisable,
 
     #[msg("Phase tier buy is disable")]
     PhaseTierBuyIsDisable,
+
+    #[msg("Phase tier buy is disable")]
+    PhaseTierBuyWithTokenIsDisable,
 
     #[msg("Phase tier airdrop is disable")]
     PhaseTierAirdropIsDisable,
@@ -52,4 +58,11 @@ pub enum SogaNodeSaleError {
 
     #[msg("Invalid discount")]
     InvalidDiscount,
+
+    #[msg("Invalid payment token mint account")]
+    InvalidPaymentTokenMintAccount,
+
+    #[msg("Payment token is disable")]
+    PaymentTokenIsDisable,
+
 }

@@ -232,6 +232,7 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
     sale_phase_tier_detail.quantity = quantity;
     sale_phase_tier_detail.mint_limit = mint_limit;
     sale_phase_tier_detail.buy_enable = true;
+    sale_phase_tier_detail.buy_with_token_enable = true;
     sale_phase_tier_detail.airdrop_enable = true;
 
     let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;

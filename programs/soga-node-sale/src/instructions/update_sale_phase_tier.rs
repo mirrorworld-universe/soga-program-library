@@ -51,7 +51,7 @@ pub struct UpdateSalePhaseTierInputAccounts<'info> {
 pub fn handle_update_sale_phase_tier(ctx: Context<UpdateSalePhaseTierInputAccounts>,
                                      _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String,
                                      tier_id: String, price: u64, mint_limit: u64,
-                                     buy_enable: bool, airdrop_enable: bool,
+                                     buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -80,6 +80,7 @@ pub fn handle_update_sale_phase_tier(ctx: Context<UpdateSalePhaseTierInputAccoun
         price,
         mint_limit,
         buy_enable,
+        buy_with_token_enable,
         airdrop_enable,
     };
 

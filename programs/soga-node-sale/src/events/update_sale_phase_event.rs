@@ -12,5 +12,7 @@ pub struct UpdateSalePhaseEvent {
 
     pub buy_enable: bool,
 
+    pub buy_with_token_enable: bool,
+
     pub airdrop_enable: bool,
 }

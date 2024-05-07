@@ -76,6 +76,7 @@ pub fn handle_initialize_sale_phase(ctx: Context<InitializeSalePhaseInputAccount
     sale_phase_detail.payment_receiver = ctx.accounts.payment_receiver.key();
 
     sale_phase_detail.buy_enable = true;
+    sale_phase_detail.buy_with_token_enable = true;
     sale_phase_detail.airdrop_enable = true;
 
     sale_phase_detail.total_tiers = total_tiers;

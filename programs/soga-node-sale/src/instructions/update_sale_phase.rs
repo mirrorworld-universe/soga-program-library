@@ -43,7 +43,7 @@ pub struct UpdateSalePhaseInputAccounts<'info> {
 pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
                                 _sale_phase_detail_bump: u8, sale_phase_name: String,
                                 name: String, symbol: String, metadata_base_uri: String,
-                                buy_enable: bool, airdrop_enable: bool,
+                                buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -68,6 +68,7 @@ pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
         price_feed: ctx.accounts.price_feed.key(),
         payment_receiver: ctx.accounts.payment_receiver.key(),
         buy_enable,
+        buy_with_token_enable,
         airdrop_enable
     };
 

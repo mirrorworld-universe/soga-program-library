@@ -173,6 +173,7 @@ const SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX: string = "SOGA_NODE_SALE_PHASE
 const SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX: string = "SOGA_NODE_SALE_PHASE_TIER_DETAIL";
 const USER_DETAIL_ACCOUNT_PREFIX: string = "USER_DETAIL";
 const USER_TIER_DETAIL_ACCOUNT_PREFIX: string = "USER_TIER_DETAIL";
+const SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_ACCOUNT_PREFIX: string = "SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN";
 
 const mainSigningAuthorityPubKey: PublicKey = anchor.AnchorProvider.env().wallet.publicKey;
 const signingAuthorityKeypair: Keypair = Keypair.generate();

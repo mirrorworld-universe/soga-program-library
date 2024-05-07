@@ -55,17 +55,41 @@ pub mod soga_node_sale {
     pub fn update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
                              _sale_phase_detail_bump: u8, sale_phase_name: String,
                              name: String, symbol: String, metadata_base_uri: String,
-                             buy_enable: bool, airdrop_enable: bool,
+                             buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
     ) -> Result<()> {
-        handle_update_sale_phase(ctx, _sale_phase_detail_bump, sale_phase_name, name, symbol, metadata_base_uri, buy_enable, airdrop_enable)
+        handle_update_sale_phase(ctx, _sale_phase_detail_bump, sale_phase_name, name, symbol, metadata_base_uri,
+                                 buy_enable, buy_with_token_enable, airdrop_enable)
     }
 
     pub fn update_sale_phase_tier(ctx: Context<UpdateSalePhaseTierInputAccounts>,
                                   _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String,
                                   tier_id: String, price: u64, mint_limit: u64,
-                                  buy_enable: bool, airdrop_enable: bool,
+                                  buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
     ) -> Result<()> {
         handle_update_sale_phase_tier(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump, sale_phase_name,
-                                      tier_id, price, mint_limit, buy_enable, airdrop_enable)
+                                      tier_id, price, mint_limit, buy_enable, buy_with_token_enable, airdrop_enable)
+    }
+
+    pub fn initialize_sale_phase_token_payment(ctx: Context<InitializeSalePhasePaymentTokenInputAccounts>,
+                                               _sale_phase_detail_bump: u8, sale_phase_name: String,
+    ) -> Result<()> {
+        handle_initialize_sale_phase_token_payment(ctx, _sale_phase_detail_bump, sale_phase_name)
+    }
+
+    pub fn update_sale_phase_token_payment(ctx: Context<UpdateSalePhasePaymentTokenInputAccounts>,
+                                           _sale_phase_detail_bump: u8, _sale_phase_payment_token_detail_bump: u8,
+                                           sale_phase_name: String, enable: bool,
+    ) -> Result<()> {
+        handle_update_sale_phase_token_payment(ctx, _sale_phase_detail_bump, _sale_phase_payment_token_detail_bump, sale_phase_name,
+                                               enable)
+    }
+
+    pub fn buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyWithTokenInputAccounts<'info>>,
+                                             _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
+                                             _collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
+                                             allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
+    ) -> Result<()> {
+        handle_buy_with_token(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump, _collection_mint_account_bump,
+                              sale_phase_name, tier_id, token_id, allow_full_discount, full_discount, allow_half_discount, half_discount)
     }
 }

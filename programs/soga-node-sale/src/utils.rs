@@ -98,6 +98,14 @@ pub fn check_phase_buy(value: bool) -> Result<()> {
     Ok(())
 }
 
+pub fn check_phase_buy_with_token(value: bool) -> Result<()> {
+    if !value  {
+        return Err(SogaNodeSaleError::PhaseBuyWithTokenIsDisable.into());
+    }
+
+    Ok(())
+}
+
 pub fn check_phase_airdrop(value: bool) -> Result<()> {
     if !value  {
         return Err(SogaNodeSaleError::PhaseAirdropIsDisable.into());
@@ -109,6 +117,14 @@ pub fn check_phase_airdrop(value: bool) -> Result<()> {
 pub fn check_phase_tier_buy(value: bool) -> Result<()> {
     if !value  {
         return Err(SogaNodeSaleError::PhaseTierBuyIsDisable.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_phase_tier_buy_with_token(value: bool) -> Result<()> {
+    if !value  {
+        return Err(SogaNodeSaleError::PhaseTierBuyWithTokenIsDisable.into());
     }
 
     Ok(())
@@ -136,6 +152,22 @@ pub fn check_invalid_discount(full_value: u64, half_value: u64) -> Result<()> {
 
     if value >= 100  {
         return Err(SogaNodeSaleError::InvalidDiscount.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_payment_token_mint_account(value_from_account: Pubkey, valur_from_param: Pubkey) -> Result<()> {
+    if value_from_account != valur_from_param {
+        return Err(SogaNodeSaleError::InvalidPaymentTokenMintAccount.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_payment_token(value: bool) -> Result<()> {
+    if !value  {
+        return Err(SogaNodeSaleError::PaymentTokenIsDisable.into());
     }
 
     Ok(())

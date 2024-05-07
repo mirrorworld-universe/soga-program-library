@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[event]
-pub struct BuyEvent {
+pub struct BuyWithTokenEvent {
     pub timestamp: i64,
 
     pub sale_phase_name: String,
@@ -51,4 +51,14 @@ pub struct BuyEvent {
     pub full_discount_in_usd: u64,
 
     pub half_discount_in_usd: u64,
+
+    pub payment_token_mint_account: Pubkey,
+
+    pub payment_token_user_token_account: Pubkey,
+
+    pub payment_token_payment_receiver_token_account: Pubkey,
+
+    pub payment_token_full_discount_receiver_token_account: Pubkey,
+
+    pub payment_token_half_discount_receiver_token_account: Pubkey
 }
