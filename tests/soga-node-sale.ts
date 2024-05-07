@@ -222,7 +222,7 @@ describe("soga_node_sale", () => {
     const initializeSalePhaseTierEventListener = program.addEventListener(InitializeSalePhaseTierEventName, handleInitializeSalePhaseTierEvent);
     const updateSalePhaseEventListener = program.addEventListener(UpdateSalePhaseEventName, handleUpdateSalePhaseEvent);
     const updateSalePhaseTierEventListener = program.addEventListener(UpdateSalePhaseTierEventName, handleUpdateSalePhaseTierEvent);
-    const buyEventListener = program.addEventListener(BuyEventName, handleBuyEvent);
+    // const buyEventListener = program.addEventListener(BuyEventName, handleBuyEvent);
     const airdropEventListener = program.addEventListener(AirdropEventName, handleAirdropEvent);
 
     it("setup signers accounts", async () => {
@@ -330,7 +330,7 @@ describe("soga_node_sale", () => {
 
     it("Update Sale Phase One", async () => {
 
-        const tx = await program.methods.updateSalePhase(sogaNodeSaleConfigBump, phaseOne, nft_name, nft_symbol, nft_url, true, true)
+        const tx = await program.methods.updateSalePhase(sogaNodeSalePhaseOneBump, phaseOne, nft_name, nft_symbol, nft_url, true, true, true)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -455,7 +455,7 @@ describe("soga_node_sale", () => {
         console.log("Node Sale Phase one tier one: ", nodeSalePhaseTierPds.toBase58());
 
         const tx = await program.methods.updateSalePhaseTier(sogaNodeSalePhaseOneBump, sogaNodeSalePhaseOneBump, phaseOne, tierId.toString(), new BN(500), new BN(2),
-            true, true)
+            true, true, true)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -598,6 +598,12 @@ describe("soga_node_sale", () => {
         const nodeUserTokenAccount = await getAssociatedTokenAddress(nodeMintAccountPda, userAKeypair.publicKey, true, TOKEN_PROGRAM_ID);
         console.log("node user token account: ", nodeUserTokenAccount.toBase58());
 
+        const [fullDiscountReceiverUserDetailPda] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX, phaseOne, sogaNodeSalePhaseOnePDA, fullReceiverKeypair.publicKey);
+        const [fullDiscountReceiverUserTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX, phaseOne, sogaNodeSalePhaseOnePDA, fullReceiverKeypair.publicKey, fullDiscountReceiverUserDetailPda, tierId.toString(), nodeSalePhaseTierPda);
+
+        const [halfDiscountReceiverUserDetailPda] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX, phaseOne, sogaNodeSalePhaseOnePDA, halfReceiverKeypair.publicKey);
+        const [halfDiscountReceiverUserTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX, phaseOne, sogaNodeSalePhaseOnePDA, halfReceiverKeypair.publicKey, halfDiscountReceiverUserDetailPda, tierId.toString(), nodeSalePhaseTierPda);
+
 
         const tx = await program.methods.buy(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump, nodeSalePhaseTierCollectionBump,
             phaseOne, tierId.toString(), tokenIdId.toString(), true, new BN(20), true, new BN(10))
@@ -655,6 +661,26 @@ describe("soga_node_sale", () => {
                 },
                 {
                     pubkey: nodeMintAccountMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: fullDiscountReceiverUserDetailPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: fullDiscountReceiverUserTierDetailPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: halfDiscountReceiverUserDetailPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: halfDiscountReceiverUserTierDetailPda,
                     isWritable: true,
                     isSigner: false
                 }
@@ -930,7 +956,7 @@ describe("soga_node_sale", () => {
         await program.removeEventListener(initializeSalePhaseTierEventListener);
         await program.removeEventListener(updateSalePhaseEventListener);
         await program.removeEventListener(updateSalePhaseTierEventListener);
-        await program.removeEventListener(buyEventListener);
+        // await program.removeEventListener(buyEventListener);
         await program.removeEventListener(airdropEventListener);
     });
 
