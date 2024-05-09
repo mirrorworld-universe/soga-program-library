@@ -34,3 +34,9 @@ rpc_port = 8899
 
 [[test.validator.clone]]
 address = "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"
+
+[[test.validator.clone]]
+address = "5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7"
+
+[[test.validator.clone]]
+address = "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto"

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX: &str = "SOGA_NODE_SALE_PHASE_TIER_DETAIL";
+pub const SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX: &str = "PHASE_TIER";
 
 #[account]
 pub struct SogaNodeSalePhaseTierDetailAccount {

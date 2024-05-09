@@ -20,11 +20,14 @@ use crate::states::{
     SogaNodeSalePhaseDetailAccount,
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhaseTierDetailAccount,
+    SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhasePaymentTokenDetailAccount,
     USER_DETAIL_ACCOUNT_PREFIX,
     UserDetailAccount,
     USER_TIER_DETAIL_ACCOUNT_PREFIX,
     UserTierDetailAccount,
+    ORDER_DETAIL_ACCOUNT_PREFIX,
+    OrderDetailAccount,
 };
 
 use crate::events::{
@@ -36,7 +39,7 @@ use crate::utils::{check_signing_authority, check_price_feed, check_payment_rece
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-_collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String)]
+sale_phase_name: String, tier_id: String, token_id: String, order_id: String)]
 pub struct BuyWithTokenInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -45,21 +48,6 @@ pub struct BuyWithTokenInputAccounts<'info> {
 
     #[account(mut)]
     pub user: Signer<'info>,
-
-    // /// CHECK: pyth price feed
-    // pub price_feed: AccountInfo<'info>,
-    //
-    // /// CHECK: payment receiver
-    // #[account(mut)]
-    // pub payment_receiver: AccountInfo<'info>,
-    //
-    // /// CHECK: full receiver
-    // #[account(mut)]
-    // pub full_discount_receiver: AccountInfo<'info>,
-    //
-    // /// CHECK: half discount receiver
-    // #[account(mut)]
-    // pub half_discount_receiver: AccountInfo<'info>,
 
     #[account(
     mut,
@@ -115,69 +103,22 @@ pub struct BuyWithTokenInputAccounts<'info> {
     pub user_tier_detail: Box<Account<'info, UserTierDetailAccount>>,
 
     #[account(
-    mut,
-    seeds = [
-    SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    tier_id.as_ref(),
-    sale_phase_tier_detail.key().as_ref(),
-    ],
-    bump = _collection_mint_account_bump,
-    mint::token_program = token_program,
-    )]
-    pub collection_mint_account: Box<InterfaceAccount<'info, Mint>>,
-
-    // /// CHECK: collection metadata
-    // #[account(mut)]
-    // pub collection_metadata: AccountInfo<'info>,
-    //
-    // /// CHECK: collection master edition
-    // #[account(mut)]
-    // pub collection_master_edition: AccountInfo<'info>,
-
-    #[account(
     init,
     payer = payer,
+    space = OrderDetailAccount::space(),
     seeds = [
-    SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
+    ORDER_DETAIL_ACCOUNT_PREFIX.as_ref(),
     sale_phase_detail.key().as_ref(),
-    tier_id.as_ref(),
-    sale_phase_tier_detail.key().as_ref(),
-    collection_mint_account.key().as_ref(),
-    token_id.as_ref()
+    user_detail.key().as_ref(),
+    order_id.as_ref(),
     ],
     bump,
-    mint::decimals = 0,
-    mint::authority = sale_phase_tier_detail.key(),
-    mint::freeze_authority = sale_phase_tier_detail.key(),
-    mint::token_program = token_program,
     )]
-    pub node_mint_account: Box<InterfaceAccount<'info, Mint>>,
+    pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
-    // /// CHECK: node metadata
-    // #[account(mut)]
-    // pub node_metadata: AccountInfo<'info>,
-    //
-    // /// CHECK: note master edition
-    // #[account(mut)]
-    // pub node_master_edition: AccountInfo<'info>,
+    // pub payment_token_mint_account: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(
-    init,
-    payer = payer,
-    associated_token::mint = node_mint_account,
-    associated_token::authority = user,
-    associated_token::token_program = token_program,
-    )]
-    pub user_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub token_program: Interface<'info, TokenInterface>,
-
-    pub token_metadata_program: Program<'info, Metadata>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    // pub payment_token_program: Interface<'info, TokenInterface>,
 
     pub system_program: Program<'info, System>,
 
@@ -185,9 +126,8 @@ pub struct BuyWithTokenInputAccounts<'info> {
 }
 
 pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyWithTokenInputAccounts<'info>>,
-                                                _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-                                                _collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
-                                                allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
+                                                _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
+                                                order_id: String, quantity: u64, allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -198,24 +138,15 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     let payment_receiver = &ctx.remaining_accounts[1];
     let full_discount_receiver = &ctx.remaining_accounts[2];
     let half_discount_receiver = &ctx.remaining_accounts[3];
-    let collection_metadata = &ctx.remaining_accounts[4];
-    let collection_master_edition = &ctx.remaining_accounts[5];
-    let node_metadata = &ctx.remaining_accounts[6];
-    let node_master_edition = &ctx.remaining_accounts[7];
 
-    let sale_phase_payment_token_detail_info = &ctx.remaining_accounts[8];
-    let payment_token_mint_account = &ctx.remaining_accounts[9];
-    let payment_token_program = &ctx.remaining_accounts[10];
+    let sale_phase_payment_token_detail_info = &ctx.remaining_accounts[4];
+    let payment_token_mint_account = &ctx.remaining_accounts[5];
+    let payment_token_program = &ctx.remaining_accounts[6];
 
-    let payment_token_user_token_account = &ctx.remaining_accounts[11];
-    let payment_token_payment_receiver_token_account = &ctx.remaining_accounts[12];
-    let payment_token_full_discount_receiver_token_account = &ctx.remaining_accounts[13];
-    let payment_token_half_discount_receiver_token_account = &ctx.remaining_accounts[14];
-
-    let full_discount_receiver_user_detail_info = &ctx.remaining_accounts[15];
-    let full_discount_receiver_user_tier_detail_info = &ctx.remaining_accounts[16];
-    let half_discount_receiver_user_detail_info = &ctx.remaining_accounts[17];
-    let half_discount_receiver_user_tier_detail_info = &ctx.remaining_accounts[18];
+    let payment_token_user_token_account = &ctx.remaining_accounts[7];
+    let payment_token_payment_receiver_token_account = &ctx.remaining_accounts[8];
+    let payment_token_full_discount_receiver_token_account = &ctx.remaining_accounts[9];
+    let payment_token_half_discount_receiver_token_account = &ctx.remaining_accounts[10];
 
     let sale_phase_payment_token_detail = SogaNodeSalePhasePaymentTokenDetailAccount::try_deserialize(&mut &**sale_phase_payment_token_detail_info.try_borrow_mut_data()?).unwrap();
 
@@ -230,11 +161,9 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
 
-    check_price_feed(sale_phase_detail.price_feed_address, price_feed_info.key())?;
+    check_price_feed(sale_phase_payment_token_detail.price_feed_address, price_feed_info.key())?;
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
-
-    check_phase_tier_collection(sale_phase_tier_detail.collection_mint_address, ctx.accounts.collection_mint_account.key())?;
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
 
@@ -251,7 +180,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_invalid_discount(full_discount, half_discount)?;
 
-    // // Make Payment
+    // Make Payment
     let price_in_usd: u64 = sale_phase_tier_detail.price;
 
     let price_feed: PriceFeed = SolanaPriceAccount::account_info_to_feed(&price_feed_info).unwrap();
@@ -278,16 +207,6 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         let cpi_program = payment_token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         transfer_checked(cpi_context, full_discount_amount_in_lamport, sale_phase_payment_token_detail.decimals)?;
-
-        let full_discount_receiver_user_detail = &mut UserDetailAccount::
-        try_deserialize(&mut &**full_discount_receiver_user_detail_info.try_borrow_mut_data()?).unwrap();
-        full_discount_receiver_user_detail.last_block_timestamp = timestamp;
-        full_discount_receiver_user_detail.total_full_discount_received = full_discount_amount_in_usd;
-
-        let full_discount_receiver_user_tier_detail = &mut UserTierDetailAccount::
-        try_deserialize(&mut &**full_discount_receiver_user_tier_detail_info.try_borrow_mut_data()?).unwrap();
-        full_discount_receiver_user_tier_detail.last_block_timestamp = timestamp;
-        full_discount_receiver_user_tier_detail.total_full_discount_received = full_discount_amount_in_usd;
     };
 
     let mut half_discount_amount_in_lamport: u64 = 0;
@@ -306,16 +225,6 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         let cpi_program = payment_token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         transfer_checked(cpi_context, half_discount_amount_in_lamport, sale_phase_payment_token_detail.decimals)?;
-
-        let half_discount_receiver_user_detail = &mut UserDetailAccount::
-        try_deserialize(&mut &**half_discount_receiver_user_detail_info.try_borrow_mut_data()?).unwrap();
-        half_discount_receiver_user_detail.last_block_timestamp = timestamp;
-        half_discount_receiver_user_detail.total_half_discount_received = half_discount_amount_in_usd;
-
-        let half_discount_receiver_user_tier_detail = &mut UserTierDetailAccount::
-        try_deserialize(&mut &**half_discount_receiver_user_tier_detail_info.try_borrow_mut_data()?).unwrap();
-        half_discount_receiver_user_tier_detail.last_block_timestamp = timestamp;
-        half_discount_receiver_user_tier_detail.total_half_discount_received = half_discount_amount_in_usd;
     }
 
     let cpi_accounts = TransferChecked {
@@ -329,115 +238,6 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     transfer_checked(cpi_context,
                      price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
                      sale_phase_payment_token_detail.decimals)?;
-
-    let sale_phase_detail_key: Pubkey = ctx.accounts.sale_phase_detail.key();
-
-    let signer_seeds = &[
-        SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-        sale_phase_name.as_ref(),
-        sale_phase_detail_key.as_ref(),
-        tier_id.as_ref(),
-        &[_sale_phase_tier_detail_bump],
-    ];
-
-    let signer = &[&signer_seeds[..]];
-
-    // create mint account
-    let mint_to_cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        MintTo {
-            mint: ctx.accounts.node_mint_account.to_account_info(),
-            to: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.sale_phase_tier_detail.to_account_info(),
-        },
-        signer,
-    );
-
-    mint_to(mint_to_cpi_context, 1)?;
-
-    // freeze delegate account
-    let freeze_account_cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        FreezeAccount {
-            mint: ctx.accounts.node_mint_account.to_account_info(),
-            account: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.sale_phase_tier_detail.to_account_info(),
-        },
-        signer,
-    );
-
-    freeze_account(freeze_account_cpi_context)?;
-
-    // create metadata account
-    let data_v2 = DataV2 {
-        name: sale_phase_detail.name.clone(),
-        symbol: sale_phase_detail.symbol.clone(),
-        uri: sale_phase_detail.metadata_base_uri.clone(),
-        seller_fee_basis_points: 0,
-        creators: None,
-        collection: Some(Collection {
-            verified: false,
-            key: ctx.accounts.collection_mint_account.key(),
-        }),
-        uses: None,
-    };
-
-    let create_metadata_accounts_v3_cpi_ctx = CpiContext::new_with_signer(
-        ctx.accounts.token_metadata_program.to_account_info(),
-        CreateMetadataAccountsV3 {
-            metadata: node_metadata.to_account_info(), // the metadata account being created
-            mint: ctx.accounts.node_mint_account.to_account_info(), // the mint account of the metadata account
-            mint_authority: ctx.accounts.sale_phase_tier_detail.to_account_info(), // the mint authority of the mint account
-            update_authority: ctx.accounts.sale_phase_tier_detail.to_account_info(), // the update authority of the metadata account
-            payer: ctx.accounts.payer.to_account_info(), // the payer for creating the metadata account
-            system_program: ctx.accounts.system_program.to_account_info(), // the system program account
-            rent: ctx.accounts.rent.to_account_info(), // the rent sysvar account
-        },
-        signer,
-    );
-
-    create_metadata_accounts_v3(
-        create_metadata_accounts_v3_cpi_ctx, // cpi context
-        data_v2, // token metadata
-        true,    // is_mutable
-        true,    // update_authority_is_signer
-        None,    // collection details
-    )?;
-
-    //create master edition account
-    let create_master_edition_v3_cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.token_metadata_program.to_account_info(),
-        CreateMasterEditionV3 {
-            edition: node_master_edition.to_account_info(),
-            mint: ctx.accounts.node_mint_account.to_account_info(),
-            update_authority: ctx.accounts.sale_phase_tier_detail.to_account_info(),
-            mint_authority: ctx.accounts.sale_phase_tier_detail.to_account_info(),
-            payer: ctx.accounts.payer.to_account_info(),
-            metadata: node_metadata.to_account_info(),
-            token_program: ctx.accounts.token_program.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
-        },
-        signer,
-    );
-
-    create_master_edition_v3(create_master_edition_v3_cpi_context, Some(0))?;
-
-    //verify collection
-    let verify_collection_cpi_context = CpiContext::new_with_signer(
-        ctx.accounts.token_metadata_program.to_account_info(),
-        VerifyCollection {
-            payer: ctx.accounts.payer.to_account_info(),
-            metadata: node_metadata.to_account_info(),
-            collection_authority: ctx.accounts.sale_phase_tier_detail.to_account_info(),
-            collection_mint: ctx.accounts.collection_mint_account.to_account_info(),
-            collection_metadata: collection_metadata.to_account_info(),
-            collection_master_edition: collection_master_edition.to_account_info(),
-        },
-        signer,
-    );
-
-    verify_collection(verify_collection_cpi_context, None)?;
 
 
     // Update
@@ -486,8 +286,6 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         tier_id,
         token_id,
         user: ctx.accounts.user.key(),
-        collection_mint_account: ctx.accounts.collection_mint_account.key(),
-        node_mint_account: ctx.accounts.node_mint_account.key(),
         price_feed: price_feed_info.key(),
         payment_receiver: payment_receiver.key(),
         full_discount_receiver: full_discount_receiver.key(),

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const USER_TIER_DETAIL_ACCOUNT_PREFIX: &str = "USER_TIER_DETAIL";
+pub const USER_TIER_DETAIL_ACCOUNT_PREFIX: &str = "USER_TIER";
 
 #[account]
 pub struct UserTierDetailAccount {

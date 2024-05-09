@@ -1,19 +1,19 @@
 use anchor_lang::prelude::*;
 
-pub const USER_DETAIL_ACCOUNT_PREFIX: &str = "USER";
+pub const ORDER_DETAIL_ACCOUNT_PREFIX: &str = "ORDER";
 
 #[account]
-pub struct UserDetailAccount {
+pub struct OrderDetailAccount {
     /// timestamp when account updated
     pub last_block_timestamp: i64,
 
-    pub total_mint: u64,
+    pub is_completed: bool,
 
-    pub total_buy: u64,
+    pub token_ids: Vec<u64>,
 
-    pub total_buy_with_token: u64,
+    pub is_token_ids_minted: Vec<bool>,
 
-    pub total_airdrop: u64,
+    pub quantity: u64,
 
     pub total_payment: u64,
 
@@ -21,12 +21,10 @@ pub struct UserDetailAccount {
 
     pub total_full_discount_received: u64,
 
-    pub total_half_discount_received: u64,
-
-    pub total_orders: u64,
+    pub total_half_discount_received: u64
 }
 
-impl UserDetailAccount {
+impl OrderDetailAccount {
     pub fn space() -> usize {
         8 // default
             + 8 // last_block_timestamp

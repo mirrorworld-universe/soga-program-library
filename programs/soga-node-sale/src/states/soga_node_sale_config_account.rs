@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const SOGA_NODE_SALE_CONFIG_ACCOUNT_PREFIX: &str = "SOGA_NODE_SALE_CONFIG";
+pub const SOGA_NODE_SALE_CONFIG_ACCOUNT_PREFIX: &str = "CONFIG";
 
 #[account]
 pub struct SogaNodeSaleConfigAccount {

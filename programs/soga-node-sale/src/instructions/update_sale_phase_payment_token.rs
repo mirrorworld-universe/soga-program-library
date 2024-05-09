@@ -43,7 +43,6 @@ pub struct UpdateSalePhasePaymentTokenInputAccounts<'info> {
     mut,
     seeds = [
     SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
     sale_phase_detail.key().as_ref(),
     payment_token_mint_account.key().as_ref()
     ],

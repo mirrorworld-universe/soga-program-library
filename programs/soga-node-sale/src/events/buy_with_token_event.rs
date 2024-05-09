@@ -10,10 +10,6 @@ pub struct BuyWithTokenEvent {
 
     pub token_id: String,
 
-    pub collection_mint_account: Pubkey,
-
-    pub node_mint_account: Pubkey,
-
     pub user: Pubkey,
 
     pub price_feed: Pubkey,

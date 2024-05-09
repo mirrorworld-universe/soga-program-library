@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX: &str = "SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL";
+pub const SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX: &str = "PHASE_PAYMENT_TOKEN";
 
 #[account]
 pub struct SogaNodeSalePhasePaymentTokenDetailAccount {
