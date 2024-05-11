@@ -69,7 +69,7 @@ pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
         payment_receiver: ctx.accounts.payment_receiver.key(),
         buy_enable,
         buy_with_token_enable,
-        airdrop_enable
+        airdrop_enable,
     };
 
     emit!(event);

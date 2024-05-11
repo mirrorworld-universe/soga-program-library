@@ -92,7 +92,7 @@ pub fn handle_initialize_sale_phase(ctx: Context<InitializeSalePhaseInputAccount
         total_tiers,
         signing_authority: ctx.accounts.signing_authority.key(),
         price_feed: ctx.accounts.price_feed.key(),
-        payment_receiver: ctx.accounts.payment_receiver.key()
+        payment_receiver: ctx.accounts.payment_receiver.key(),
     };
 
     emit!(event);

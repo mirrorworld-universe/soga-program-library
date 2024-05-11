@@ -4,16 +4,6 @@ use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
 use pyth_sdk_solana::{Price, PriceFeed, state::SolanaPriceAccount};
 
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    metadata::{
-        create_master_edition_v3, create_metadata_accounts_v3, CreateMasterEditionV3,
-        CreateMetadataAccountsV3, Metadata, mpl_token_metadata::types::{DataV2, Collection},
-        VerifyCollection, verify_collection,
-    },
-    token_interface::{Mint, TokenAccount, TokenInterface, MintTo, mint_to, FreezeAccount, freeze_account},
-};
-
 use crate::states::{
     SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhaseDetailAccount,
@@ -35,7 +25,6 @@ use crate::utils::{
     check_signing_authority,
     check_price_feed,
     check_payment_receiver,
-    check_phase_tier_collection,
     check_phase_tier_is_completed,
     check_token_quantity_out_of_range,
     check_mint_limit,
@@ -292,36 +281,33 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     user_tier_detail.total_discount += half_discount_amount_in_usd;
     user_tier_detail.last_block_timestamp = timestamp;
 
-    // // Event
-    // let event: BuyEvent = BuyEvent {
-    //     timestamp,
-    //     sale_phase_name,
-    //     tier_id,
-    //     token_id,
-    //     user: ctx.accounts.user.key(),
-    //     collection_mint_account: ctx.accounts.collection_mint_account.key(),
-    //     node_mint_account: ctx.accounts.node_mint_account.key(),
-    //     price_feed: price_feed_info.key(),
-    //     payment_receiver: payment_receiver.key(),
-    //     full_discount_receiver: full_discount_receiver.key(),
-    //     half_discount_receiver: half_discount_receiver.key(),
-    //     total_price_in_lamport: price_in_lamport,
-    //     sub_price_in_lamport: price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
-    //     full_discount_in_lamport: full_discount_amount_in_lamport,
-    //     half_discount_in_lamport: half_discount_amount_in_lamport,
-    //     pyth_expo,
-    //     pyth_price,
-    //     allow_full_discount,
-    //     full_discount,
-    //     allow_half_discount,
-    //     half_discount,
-    //     total_price_in_usd: price_in_usd,
-    //     sub_price_in_usd: price_in_usd.sub(full_discount_amount_in_usd).sub(half_discount_amount_in_usd),
-    //     full_discount_in_usd: full_discount_amount_in_usd,
-    //     half_discount_in_usd: half_discount_amount_in_usd,
-    // };
-    //
-    // emit!(event);
+    // Event
+    let event: BuyEvent = BuyEvent {
+        timestamp,
+        sale_phase_name,
+        tier_id,
+        order_id,
+        user: ctx.accounts.user.key(),
+        price_feed: price_feed_info.key(),
+        payment_receiver: payment_receiver.key(),
+        full_discount_receiver: full_discount_receiver.key(),
+        half_discount_receiver: half_discount_receiver.key(),
+        total_price_in_lamport: price_in_lamport,
+        full_discount_in_lamport: full_discount_amount_in_lamport,
+        half_discount_in_lamport: half_discount_amount_in_lamport,
+        pyth_expo,
+        pyth_price,
+        allow_full_discount,
+        full_discount,
+        allow_half_discount,
+        half_discount,
+        total_price_in_usd: price_in_usd,
+        full_discount_in_usd: full_discount_amount_in_usd,
+        half_discount_in_usd: half_discount_amount_in_usd,
+        quantity,
+    };
+
+    emit!(event);
 
     Ok(())
 }

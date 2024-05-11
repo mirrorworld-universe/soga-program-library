@@ -25,7 +25,16 @@ use crate::states::{
 
 use crate::events::{AirdropEvent};
 
-use crate::utils::{check_signing_authority, check_phase_tier_collection, check_phase_tier_is_completed, check_token_id, check_token_quantity_out_of_range, check_mint_limit, check_phase_airdrop, check_phase_tier_airdrop, check_token_id_out_of_range};
+use crate::utils::{
+    check_signing_authority,
+    check_phase_tier_collection,
+    check_phase_tier_is_completed,
+    check_token_id,
+    check_mint_limit,
+    check_phase_airdrop,
+    check_phase_tier_airdrop,
+    check_token_id_out_of_range,
+};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,

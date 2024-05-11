@@ -86,7 +86,7 @@ pub fn handle_initialize_sale_phase_token_payment(ctx: Context<InitializeSalePha
         timestamp,
         sale_phase_name,
         price_feed: ctx.accounts.price_feed.key(),
-        mint: ctx.accounts.payment_token_mint_account.key()
+        mint: ctx.accounts.payment_token_mint_account.key(),
     };
 
     emit!(event);

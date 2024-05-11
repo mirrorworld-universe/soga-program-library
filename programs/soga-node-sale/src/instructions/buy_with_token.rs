@@ -5,14 +5,7 @@ use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use pyth_sdk_solana::{Price, PriceFeed, state::SolanaPriceAccount};
 
 use anchor_spl::{
-    associated_token::AssociatedToken,
-    metadata::{
-        create_master_edition_v3, create_metadata_accounts_v3, CreateMasterEditionV3,
-        CreateMetadataAccountsV3, Metadata, mpl_token_metadata::types::{DataV2, Collection},
-        VerifyCollection, verify_collection,
-    },
-    token_interface::{Mint, TokenAccount, TokenInterface, MintTo, mint_to, FreezeAccount, freeze_account,
-                      TransferChecked, transfer_checked},
+    token_interface::{TransferChecked, transfer_checked},
 };
 
 use crate::states::{
@@ -252,18 +245,6 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     order_detail.token_ids = Vec::with_capacity(quantity as usize);
     order_detail.is_token_ids_minted = Vec::with_capacity(quantity as usize);
 
-    // let mut n = 0;
-    // let mut current_token_id: u64 = sale_phase_tier_detail.total_mint;
-    //
-    // while n < quantity {
-    //     current_token_id += 1;
-    //     order_detail.token_ids.push(current_token_id);
-    //     order_detail.is_token_ids_minted.push(false);
-    //
-    //     n += 1;
-    // }
-
-
     let mut current_token_id: u64 = sale_phase_tier_detail.total_mint;
 
     for _i in 0..quantity {
@@ -312,38 +293,37 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     user_tier_detail.last_block_timestamp = timestamp;
 
     // Event
-    // let event: BuyWithTokenEvent = BuyWithTokenEvent {
-    //     timestamp,
-    //     sale_phase_name,
-    //     tier_id,
-    //     token_id,
-    //     user: ctx.accounts.user.key(),
-    //     price_feed: price_feed_info.key(),
-    //     payment_receiver: payment_receiver.key(),
-    //     full_discount_receiver: full_discount_receiver.key(),
-    //     half_discount_receiver: half_discount_receiver.key(),
-    //     total_price_in_lamport: price_in_lamport,
-    //     sub_price_in_lamport: price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
-    //     full_discount_in_lamport: full_discount_amount_in_lamport,
-    //     half_discount_in_lamport: half_discount_amount_in_lamport,
-    //     pyth_expo,
-    //     pyth_price,
-    //     allow_full_discount,
-    //     full_discount,
-    //     allow_half_discount,
-    //     half_discount,
-    //     total_price_in_usd: price_in_usd,
-    //     sub_price_in_usd: price_in_usd.sub(full_discount_amount_in_usd).sub(half_discount_amount_in_usd),
-    //     full_discount_in_usd: full_discount_amount_in_usd,
-    //     half_discount_in_usd: half_discount_amount_in_usd,
-    //     payment_token_mint_account: payment_token_mint_account.key(),
-    //     payment_token_user_token_account: payment_token_user_token_account.key(),
-    //     payment_token_payment_receiver_token_account: payment_token_payment_receiver_token_account.key(),
-    //     payment_token_full_discount_receiver_token_account: payment_token_full_discount_receiver_token_account.key(),
-    //     payment_token_half_discount_receiver_token_account: payment_token_half_discount_receiver_token_account.key(),
-    // };
-    //
-    // emit!(event);
+    let event: BuyWithTokenEvent = BuyWithTokenEvent {
+        timestamp,
+        sale_phase_name,
+        tier_id,
+        order_id,
+        user: ctx.accounts.user.key(),
+        price_feed: price_feed_info.key(),
+        payment_receiver: payment_receiver.key(),
+        full_discount_receiver: full_discount_receiver.key(),
+        half_discount_receiver: half_discount_receiver.key(),
+        total_price_in_lamport: price_in_lamport,
+        full_discount_in_lamport: full_discount_amount_in_lamport,
+        half_discount_in_lamport: half_discount_amount_in_lamport,
+        pyth_expo,
+        pyth_price,
+        allow_full_discount,
+        full_discount,
+        allow_half_discount,
+        half_discount,
+        total_price_in_usd: price_in_usd,
+        full_discount_in_usd: full_discount_amount_in_usd,
+        half_discount_in_usd: half_discount_amount_in_usd,
+        payment_token_mint_account: payment_token_mint_account.key(),
+        payment_token_user_token_account: payment_token_user_token_account.key(),
+        payment_token_payment_receiver_token_account: payment_token_payment_receiver_token_account.key(),
+        payment_token_full_discount_receiver_token_account: payment_token_full_discount_receiver_token_account.key(),
+        payment_token_half_discount_receiver_token_account: payment_token_half_discount_receiver_token_account.key(),
+        quantity,
+    };
+
+    emit!(event);
 
     Ok(())
 }

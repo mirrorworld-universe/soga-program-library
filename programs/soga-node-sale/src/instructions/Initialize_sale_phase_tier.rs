@@ -236,7 +236,6 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
     sale_phase_detail.last_block_timestamp = timestamp;
 
     // Event
-
     let event: InitializeSalePhaseTierEvent = InitializeSalePhaseTierEvent {
         timestamp,
         sale_phase_name,

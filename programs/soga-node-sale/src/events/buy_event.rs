@@ -8,11 +8,7 @@ pub struct BuyEvent {
 
     pub tier_id: String,
 
-    pub token_id: String,
-
-    pub collection_mint_account: Pubkey,
-
-    pub node_mint_account: Pubkey,
+    pub order_id: String,
 
     pub user: Pubkey,
 
@@ -25,8 +21,6 @@ pub struct BuyEvent {
     pub half_discount_receiver: Pubkey,
 
     pub total_price_in_lamport: u64,
-
-    pub sub_price_in_lamport: u64,
 
     pub full_discount_in_lamport: u64,
 
@@ -46,9 +40,9 @@ pub struct BuyEvent {
 
     pub total_price_in_usd: u64,
 
-    pub sub_price_in_usd: u64,
-
     pub full_discount_in_usd: u64,
 
     pub half_discount_in_usd: u64,
+
+    pub quantity: u64,
 }

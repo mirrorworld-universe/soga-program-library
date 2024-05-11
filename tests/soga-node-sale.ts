@@ -101,7 +101,7 @@ interface AirdropEvent {
     user: PublicKey,
 }
 
-interface BuyEvent {
+interface FillOrderEvent {
     timestamp: BN,
 
     salePhaseName: string,
@@ -110,9 +110,25 @@ interface BuyEvent {
 
     tokenId: string,
 
+    orderId: string,
+
     collectionMintAccount: PublicKey,
 
     nodeMintAccount: PublicKey,
+
+    user: PublicKey,
+
+    isCompleted: boolean,
+}
+
+interface BuyEvent {
+    timestamp: BN,
+
+    salePhaseName: string,
+
+    tierId: string,
+
+    orderId: string,
 
     user: PublicKey,
 
@@ -126,13 +142,17 @@ interface BuyEvent {
 
     totalPriceInLamport: BN,
 
-    subPriceInLamport: BN,
-
     fullDiscountInLamport: BN,
 
     halfDiscountInLamport: BN,
 
-    priceInUsd: BN,
+    totalPriceInUsd: BN,
+
+    fullDiscountInUsd: BN,
+
+    halfDiscountInUsd: BN,
+
+    quantity: BN,
 
     pythPrice: BN,
 
@@ -147,13 +167,91 @@ interface BuyEvent {
     halfDiscount: BN
 }
 
+interface BuyWithTokenEvent {
+    timestamp: BN,
+
+    salePhaseName: string,
+
+    tierId: string,
+
+    orderId: string,
+
+    user: PublicKey,
+
+    priceFeed: PublicKey,
+
+    paymentReceiver: PublicKey,
+
+    fullDiscountReceiver: PublicKey,
+
+    halfDiscountReceiver: PublicKey,
+
+    totalPriceInLamport: BN,
+
+    fullDiscountInLamport: BN,
+
+    halfDiscountInLamport: BN,
+
+    totalPriceInUsd: BN,
+
+    fullDiscountInUsd: BN,
+
+    halfDiscountInUsd: BN,
+
+    quantity: BN,
+
+    pythPrice: BN,
+
+    pythExpo: BN,
+
+    allowFullDiscount: boolean,
+
+    fullDiscount: BN,
+
+    allowHalfDiscount: boolean,
+
+    halfDiscount: BN,
+
+    paymentTokenUserTokenAccount: PublicKey,
+
+    paymentTokenPaymentReceiverTokenAccount: PublicKey,
+
+    paymentTokenFullDiscountReceiverTokenAccount: PublicKey,
+
+    paymentTokenHalfDiscountReceiverTokenAccount: PublicKey,
+}
+
+interface InitializeSalePhasePaymentTokenEvent {
+    timestamp: BN,
+
+    salePhaseName: string,
+
+    priceFeed: PublicKey,
+
+    mint: PublicKey,
+}
+
+interface UpdateSalePhasePaymentTokenEvent {
+    timestamp: BN,
+
+    salePhaseName: string,
+
+    priceFeed: PublicKey,
+
+    enable: boolean,
+}
+
 //// Event Name
 const InitializeSalePhaseEventName = "InitializeSalePhaseEvent";
 const InitializeSalePhaseTierEventName = "InitializeSalePhaseTierEvent";
+const InitializeSalePhasePaymentTokenEventName = "InitializeSalePhasePaymentTokenEvent";
 const UpdateSalePhaseEventName = "UpdateSalePhaseEvent";
 const UpdateSalePhaseTierEventName = "UpdateSalePhaseTierEvent";
+const UpdateSalePhasePaymentTokenEventName = "UpdateSalePhasePaymentTokenEvent";
 const BuyEventName = "BuyEvent";
+const BuyWithTokenEventName = "BuyWithTokenEvent";
 const AirdropEventName = "AirdropEvent";
+const FillOrderEventName = "FillOrderEvent";
 
 const handleInitializeSalePhaseEvent = (ev: InitializeSalePhaseEvent) =>
     console.log(`${InitializeSalePhaseEventName} ==> `, ev);
@@ -161,17 +259,29 @@ const handleInitializeSalePhaseEvent = (ev: InitializeSalePhaseEvent) =>
 const handleInitializeSalePhaseTierEvent = (ev: InitializeSalePhaseTierEvent) =>
     console.log(`${InitializeSalePhaseTierEventName} ==> `, ev);
 
+const handleInitializeSalePhasePaymentTokenEvent = (ev: InitializeSalePhasePaymentTokenEvent) =>
+    console.log(`${InitializeSalePhasePaymentTokenEventName} ==> `, ev);
+
 const handleUpdateSalePhaseEvent = (ev: UpdateSalePhaseEvent) =>
     console.log(`${UpdateSalePhaseEventName} ==> `, ev);
 
 const handleUpdateSalePhaseTierEvent = (ev: UpdateSalePhaseTierEvent) =>
     console.log(`${UpdateSalePhaseTierEventName} ==> `, ev);
 
+const handleUpdateSalePhasePaymentTokenEvent = (ev: UpdateSalePhasePaymentTokenEvent) =>
+    console.log(`${UpdateSalePhasePaymentTokenEventName} ==> `, ev);
+
 const handleBuyEvent = (ev: BuyEvent) =>
     console.log(`${BuyEventName} ==> `, ev);
 
+const handleBuyWithTokenEvent = (ev: BuyEvent) =>
+    console.log(`${BuyWithTokenEventName} ==> `, ev);
+
 const handleAirdropEvent = (ev: AirdropEvent) =>
     console.log(`${AirdropEventName} ==> `, ev);
+
+const handleFillOrderEvent = (ev: FillOrderEvent) =>
+    console.log(`${FillOrderEventName} ==> `, ev);
 
 
 const SOGA_NODE_SALE_CONFIG_ACCOUNT_PREFIX: string = "CONFIG";
@@ -208,7 +318,6 @@ let fullDiscountReceiverPaymentTokenAccount: PublicKey;
 let halfDiscountPaymentTokenAccount: PublicKey;
 
 // PDA and Bumps
-
 let sogaNodeSaleConfigPDA: PublicKey;
 let sogaNodeSaleConfigBump: number;
 
@@ -237,12 +346,16 @@ describe("soga_node_sale", () => {
     let connection = anchor.AnchorProvider.env().connection;
 
     // Setup Event
-    // const initializeSalePhaseEventListener = program.addEventListener(InitializeSalePhaseEventName, handleInitializeSalePhaseEvent);
-    // const initializeSalePhaseTierEventListener = program.addEventListener(InitializeSalePhaseTierEventName, handleInitializeSalePhaseTierEvent);
-    // const updateSalePhaseEventListener = program.addEventListener(UpdateSalePhaseEventName, handleUpdateSalePhaseEvent);
-    // const updateSalePhaseTierEventListener = program.addEventListener(UpdateSalePhaseTierEventName, handleUpdateSalePhaseTierEvent);
-    // const buyEventListener = program.addEventListener(BuyEventName, handleBuyEvent);
-    // const airdropEventListener = program.addEventListener(AirdropEventName, handleAirdropEvent);
+    const initializeSalePhaseEventListener = program.addEventListener(InitializeSalePhaseEventName, handleInitializeSalePhaseEvent);
+    const initializeSalePhaseTierEventListener = program.addEventListener(InitializeSalePhaseTierEventName, handleInitializeSalePhaseTierEvent);
+    const initializeSalePhasePaymentTokenEventListener = program.addEventListener(InitializeSalePhasePaymentTokenEventName, handleInitializeSalePhasePaymentTokenEvent);
+    const updateSalePhaseEventListener = program.addEventListener(UpdateSalePhaseEventName, handleUpdateSalePhaseEvent);
+    const updateSalePhaseTierEventListener = program.addEventListener(UpdateSalePhaseTierEventName, handleUpdateSalePhaseTierEvent);
+    const updateSalePhasePaymentTokenEventListener = program.addEventListener(UpdateSalePhasePaymentTokenEventName, handleUpdateSalePhasePaymentTokenEvent);
+    const airdropEventListener = program.addEventListener(AirdropEventName, handleAirdropEvent);
+    const buyEventListener = program.addEventListener(BuyEventName, handleBuyEvent);
+    const buyWithTokenEventListener = program.addEventListener(BuyWithTokenEventName, handleBuyWithTokenEvent);
+    const fillOrderEventListener = program.addEventListener(FillOrderEventName, handleFillOrderEvent);
 
     it("setup signers accounts", async () => {
         await connection.requestAirdrop(signingAuthorityKeypair.publicKey, 20 * LAMPORTS_PER_SOL);
@@ -1186,12 +1299,16 @@ describe("soga_node_sale", () => {
     it("Remove Events", async () => {
         await delay(2000);
 
-        // await program.removeEventListener(initializeSalePhaseEventListener);
-        // await program.removeEventListener(initializeSalePhaseTierEventListener);
-        // await program.removeEventListener(updateSalePhaseEventListener);
-        // await program.removeEventListener(updateSalePhaseTierEventListener);
-        // await program.removeEventListener(buyEventListener);
-        // await program.removeEventListener(airdropEventListener);
+        await program.removeEventListener(initializeSalePhaseEventListener);
+        await program.removeEventListener(initializeSalePhaseTierEventListener);
+        await program.removeEventListener(initializeSalePhasePaymentTokenEventListener);
+        await program.removeEventListener(updateSalePhaseEventListener);
+        await program.removeEventListener(updateSalePhaseTierEventListener);
+        await program.removeEventListener(updateSalePhasePaymentTokenEventListener);
+        await program.removeEventListener(airdropEventListener);
+        await program.removeEventListener(buyEventListener);
+        await program.removeEventListener(buyWithTokenEventListener);
+        await program.removeEventListener(fillOrderEventListener);
     });
 
 });

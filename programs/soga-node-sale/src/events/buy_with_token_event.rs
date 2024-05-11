@@ -8,7 +8,7 @@ pub struct BuyWithTokenEvent {
 
     pub tier_id: String,
 
-    pub token_id: String,
+    pub order_id: String,
 
     pub user: Pubkey,
 
@@ -21,8 +21,6 @@ pub struct BuyWithTokenEvent {
     pub half_discount_receiver: Pubkey,
 
     pub total_price_in_lamport: u64,
-
-    pub sub_price_in_lamport: u64,
 
     pub full_discount_in_lamport: u64,
 
@@ -42,8 +40,6 @@ pub struct BuyWithTokenEvent {
 
     pub total_price_in_usd: u64,
 
-    pub sub_price_in_usd: u64,
-
     pub full_discount_in_usd: u64,
 
     pub half_discount_in_usd: u64,
@@ -56,5 +52,7 @@ pub struct BuyWithTokenEvent {
 
     pub payment_token_full_discount_receiver_token_account: Pubkey,
 
-    pub payment_token_half_discount_receiver_token_account: Pubkey
+    pub payment_token_half_discount_receiver_token_account: Pubkey,
+
+    pub quantity: u64,
 }

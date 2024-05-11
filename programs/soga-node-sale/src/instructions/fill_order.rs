@@ -17,26 +17,17 @@ use crate::states::{
     SogaNodeSalePhaseTierDetailAccount,
     USER_DETAIL_ACCOUNT_PREFIX,
     UserDetailAccount,
-    USER_TIER_DETAIL_ACCOUNT_PREFIX,
-    UserTierDetailAccount,
     COLLECTION_ACCOUNT_PREFIX,
     NODE_ACCOUNT_PREFIX,
     ORDER_DETAIL_ACCOUNT_PREFIX,
     OrderDetailAccount,
 };
 
-use crate::events::{AirdropEvent};
+use crate::events::{FillOrderEvent};
 
 use crate::utils::{
     check_signing_authority,
     check_phase_tier_collection,
-    check_phase_tier_is_completed,
-    check_token_id,
-    check_token_quantity_out_of_range,
-    check_mint_limit,
-    check_phase_airdrop,
-    check_phase_tier_airdrop,
-    check_token_id_out_of_range,
     check_order_token_id_filled,
     check_order_token_id,
     check_order_is_filled,
@@ -306,17 +297,19 @@ pub fn handle_file_order<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Fill
     }
 
     // Event
-    // let event: AirdropEvent = AirdropEvent {
-    //     timestamp,
-    //     sale_phase_name,
-    //     tier_id,
-    //     token_id,
-    //     user: ctx.accounts.user.key(),
-    //     collection_mint_account: ctx.accounts.collection_mint_account.key(),
-    //     node_mint_account: ctx.accounts.node_mint_account.key(),
-    // };
-    //
-    // emit!(event);
+    let event: FillOrderEvent = FillOrderEvent {
+        timestamp,
+        sale_phase_name,
+        tier_id,
+        order_id,
+        token_id,
+        user: ctx.accounts.user.key(),
+        collection_mint_account: ctx.accounts.collection_mint_account.key(),
+        node_mint_account: ctx.accounts.node_mint_account.key(),
+        is_completed: order_detail.is_completed,
+    };
+
+    emit!(event);
 
     Ok(())
 }

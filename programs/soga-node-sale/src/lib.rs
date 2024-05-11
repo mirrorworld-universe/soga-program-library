@@ -9,7 +9,7 @@ mod events;
 mod error;
 mod utils;
 
-declare_id!("8cXvCEzqTYVqoGNcJYm1KD6asoHSmjr24k4s2S3UesvC");
+declare_id!("2VHjvzPThzEXeSMWgKTBtQM9LuB6Qh2a6E9XNJieajFG");
 
 #[program]
 pub mod soga_node_sale {
