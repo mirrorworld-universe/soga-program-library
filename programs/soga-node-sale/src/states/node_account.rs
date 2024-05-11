@@ -1,0 +1,1 @@
+pub const NODE_ACCOUNT_PREFIX: &str = "NODE";

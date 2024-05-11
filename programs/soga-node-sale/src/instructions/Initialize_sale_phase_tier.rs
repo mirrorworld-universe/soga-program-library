@@ -14,6 +14,7 @@ use crate::states::{
     SogaNodeSalePhaseDetailAccount,
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhaseTierDetailAccount,
+    COLLECTION_ACCOUNT_PREFIX,
 };
 
 use crate::events::{
@@ -51,7 +52,6 @@ pub struct InitializeSalePhaseTierInputAccounts<'info> {
     space = SogaNodeSalePhaseTierDetailAccount::space(),
     seeds = [
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
     sale_phase_detail.key().as_ref(),
     tier_id.as_ref()
     ],
@@ -63,10 +63,7 @@ pub struct InitializeSalePhaseTierInputAccounts<'info> {
     init,
     payer = payer,
     seeds = [
-    SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    tier_id.as_ref(),
+    COLLECTION_ACCOUNT_PREFIX.as_ref(),
     sale_phase_tier_detail.key().as_ref(),
     ],
     bump,
@@ -137,7 +134,6 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
 
     let signer_seeds = &[
         SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-        sale_phase_name.as_ref(),
         sale_phase_detail_key.as_ref(),
         tier_id.as_ref(),
         &[ctx.bumps.sale_phase_tier_detail],

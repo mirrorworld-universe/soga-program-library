@@ -8,6 +8,7 @@ pub use update_sale_phase_tier::*;
 pub use initialize_sale_phase_payment_token::*;
 pub use update_sale_phase_payment_token::*;
 pub use buy_with_token::*;
+pub use fill_order::*;
 
 
 pub mod initialize;
@@ -20,3 +21,5 @@ pub mod update_sale_phase_tier;
 pub mod initialize_sale_phase_payment_token;
 pub mod update_sale_phase_payment_token;
 pub mod buy_with_token;
+
+pub mod fill_order;

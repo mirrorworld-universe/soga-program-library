@@ -18,10 +18,6 @@ pub struct UserTierDetailAccount {
     pub total_payment: u64,
 
     pub total_discount: u64,
-
-    pub total_full_discount_received: u64,
-
-    pub total_half_discount_received: u64,
 }
 
 impl UserTierDetailAccount {
@@ -35,7 +31,5 @@ impl UserTierDetailAccount {
             + 8 // total_airdrop
             + 8 // total_payment
             + 8 // total_discount
-            + 8 // total_full_discount_received
-            + 8 // total_half_discount_received
     }
 }

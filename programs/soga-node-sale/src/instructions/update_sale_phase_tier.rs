@@ -35,7 +35,6 @@ pub struct UpdateSalePhaseTierInputAccounts<'info> {
     mut,
     seeds = [
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
     sale_phase_detail.key().as_ref(),
     tier_id.as_ref()
     ],

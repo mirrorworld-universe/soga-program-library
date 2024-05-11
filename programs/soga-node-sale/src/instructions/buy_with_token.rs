@@ -1,4 +1,4 @@
-use std::ops::Sub;
+use std::ops::{Add, Mul, Sub};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
@@ -20,7 +20,6 @@ use crate::states::{
     SogaNodeSalePhaseDetailAccount,
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhaseTierDetailAccount,
-    SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX,
     SogaNodeSalePhasePaymentTokenDetailAccount,
     USER_DETAIL_ACCOUNT_PREFIX,
     UserDetailAccount,
@@ -34,12 +33,24 @@ use crate::events::{
     BuyWithTokenEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_collection, check_phase_tier_is_completed, check_token_id, check_token_id_out_of_range, check_mint_limit
-                   , check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token};
+use crate::utils::{
+    check_signing_authority,
+    check_price_feed,
+    check_payment_receiver,
+    check_phase_tier_is_completed,
+    check_token_quantity_out_of_range,
+    check_mint_limit,
+    check_invalid_discount,
+    check_payment_token_mint_account,
+    check_payment_token,
+    check_phase_buy_with_token,
+    check_phase_tier_buy_with_token,
+    check_quantity,
+};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-sale_phase_name: String, tier_id: String, token_id: String, order_id: String)]
+sale_phase_name: String, tier_id: String, order_id: String, quantity: u64)]
 pub struct BuyWithTokenInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -63,7 +74,6 @@ pub struct BuyWithTokenInputAccounts<'info> {
     mut,
     seeds = [
     SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
     sale_phase_detail.key().as_ref(),
     tier_id.as_ref()
     ],
@@ -77,7 +87,6 @@ pub struct BuyWithTokenInputAccounts<'info> {
     space = UserDetailAccount::space(),
     seeds = [
     USER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
     sale_phase_detail.key().as_ref(),
     user.key().as_ref(),
     ],
@@ -91,11 +100,7 @@ pub struct BuyWithTokenInputAccounts<'info> {
     space = UserTierDetailAccount::space(),
     seeds = [
     USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    user.key().as_ref(),
     user_detail.key().as_ref(),
-    tier_id.as_ref(),
     sale_phase_tier_detail.key().as_ref(),
     ],
     bump,
@@ -105,7 +110,7 @@ pub struct BuyWithTokenInputAccounts<'info> {
     #[account(
     init,
     payer = payer,
-    space = OrderDetailAccount::space(),
+    space = OrderDetailAccount::space(quantity),
     seeds = [
     ORDER_DETAIL_ACCOUNT_PREFIX.as_ref(),
     sale_phase_detail.key().as_ref(),
@@ -116,17 +121,13 @@ pub struct BuyWithTokenInputAccounts<'info> {
     )]
     pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
-    // pub payment_token_mint_account: Box<InterfaceAccount<'info, Mint>>,
-
-    // pub payment_token_program: Interface<'info, TokenInterface>,
-
     pub system_program: Program<'info, System>,
 
     pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyWithTokenInputAccounts<'info>>,
-                                                _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
+                                                _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String, tier_id: String,
                                                 order_id: String, quantity: u64, allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
@@ -167,21 +168,18 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
 
-    let token_id_int: u64 = token_id.clone().parse().unwrap();
-    let current_token_id: u64 = sale_phase_tier_detail.total_mint + 1;
+    check_quantity(sale_phase_tier_detail.mint_limit, quantity)?;
 
-    check_token_id(current_token_id, token_id_int)?;
-
-    check_token_id_out_of_range(sale_phase_tier_detail.total_mint, token_id_int, sale_phase_tier_detail.quantity)?;
+    check_token_quantity_out_of_range(sale_phase_tier_detail.total_mint + quantity, sale_phase_tier_detail.quantity)?;
 
     let user_tier_detail: &Box<Account<UserTierDetailAccount>> = &ctx.accounts.user_tier_detail;
 
-    check_mint_limit(sale_phase_tier_detail.mint_limit, user_tier_detail.total_mint)?;
+    check_mint_limit(sale_phase_tier_detail.mint_limit, user_tier_detail.total_mint + quantity)?;
 
     check_invalid_discount(full_discount, half_discount)?;
 
     // Make Payment
-    let price_in_usd: u64 = sale_phase_tier_detail.price;
+    let price_in_usd: u64 = sale_phase_tier_detail.price.mul(quantity);
 
     let price_feed: PriceFeed = SolanaPriceAccount::account_info_to_feed(&price_feed_info).unwrap();
 
@@ -241,9 +239,42 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
 
     // Update
+    let order_detail: &mut Box<Account<OrderDetailAccount>> = &mut ctx.accounts.order_detail;
+    order_detail.last_block_timestamp = timestamp;
+    order_detail.tier_id = tier_id.clone().parse().unwrap();
+    order_detail.is_completed = false;
+    order_detail.quantity = quantity;
+    order_detail.total_payment_in_usd = price_in_usd;
+    order_detail.total_discount_in_usd = full_discount_amount_in_usd.add(half_discount_amount_in_usd);
+    order_detail.total_payment = price_in_lamport;
+    order_detail.total_discount = full_discount_amount_in_lamport.add(half_discount_amount_in_lamport);
+    order_detail.payment_token_mint_account = Some(payment_token_mint_account.key());
+    order_detail.token_ids = Vec::with_capacity(quantity as usize);
+    order_detail.is_token_ids_minted = Vec::with_capacity(quantity as usize);
+
+    // let mut n = 0;
+    // let mut current_token_id: u64 = sale_phase_tier_detail.total_mint;
+    //
+    // while n < quantity {
+    //     current_token_id += 1;
+    //     order_detail.token_ids.push(current_token_id);
+    //     order_detail.is_token_ids_minted.push(false);
+    //
+    //     n += 1;
+    // }
+
+
+    let mut current_token_id: u64 = sale_phase_tier_detail.total_mint;
+
+    for _i in 0..quantity {
+        current_token_id += 1;
+        order_detail.token_ids.push(current_token_id);
+        order_detail.is_token_ids_minted.push(false);
+    };
+
     let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
-    sale_phase_detail.total_buy_with_token += 1;
-    sale_phase_detail.total_mint += 1;
+    sale_phase_detail.total_buy_with_token += quantity;
+    sale_phase_detail.total_mint += quantity;
     sale_phase_detail.total_payment += price_in_usd;
     sale_phase_detail.total_discount += full_discount_amount_in_usd;
     sale_phase_detail.total_discount += half_discount_amount_in_usd;
@@ -251,8 +282,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
 
     let sale_phase_tier_detail: &mut Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &mut ctx.accounts.sale_phase_tier_detail;
-    sale_phase_tier_detail.total_mint += 1;
-    sale_phase_tier_detail.total_buy_with_token += 1;
+    sale_phase_tier_detail.total_mint += quantity;
+    sale_phase_tier_detail.total_buy_with_token += quantity;
     sale_phase_tier_detail.total_payment += price_in_usd;
     sale_phase_tier_detail.total_discount += full_discount_amount_in_usd;
     sale_phase_tier_detail.total_discount += half_discount_amount_in_usd;
@@ -264,54 +295,55 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     }
 
     let user_detail: &mut Box<Account<UserDetailAccount>> = &mut ctx.accounts.user_detail;
-    user_detail.total_buy_with_token += 1;
-    user_detail.total_mint += 1;
+    user_detail.total_buy_with_token += quantity;
+    user_detail.total_mint += quantity;
     user_detail.total_payment += price_in_usd;
     user_detail.total_discount += full_discount_amount_in_usd;
     user_detail.total_discount += half_discount_amount_in_usd;
+    user_detail.total_orders += 1;
     user_detail.last_block_timestamp = timestamp;
 
     let user_tier_detail: &mut Box<Account<UserTierDetailAccount>> = &mut ctx.accounts.user_tier_detail;
-    user_tier_detail.total_buy_with_token += 1;
-    user_tier_detail.total_mint += 1;
+    user_tier_detail.total_buy_with_token += quantity;
+    user_tier_detail.total_mint += quantity;
     user_tier_detail.total_payment += price_in_usd;
     user_tier_detail.total_discount += full_discount_amount_in_usd;
     user_tier_detail.total_discount += half_discount_amount_in_usd;
     user_tier_detail.last_block_timestamp = timestamp;
 
     // Event
-    let event: BuyWithTokenEvent = BuyWithTokenEvent {
-        timestamp,
-        sale_phase_name,
-        tier_id,
-        token_id,
-        user: ctx.accounts.user.key(),
-        price_feed: price_feed_info.key(),
-        payment_receiver: payment_receiver.key(),
-        full_discount_receiver: full_discount_receiver.key(),
-        half_discount_receiver: half_discount_receiver.key(),
-        total_price_in_lamport: price_in_lamport,
-        sub_price_in_lamport: price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
-        full_discount_in_lamport: full_discount_amount_in_lamport,
-        half_discount_in_lamport: half_discount_amount_in_lamport,
-        pyth_expo,
-        pyth_price,
-        allow_full_discount,
-        full_discount,
-        allow_half_discount,
-        half_discount,
-        total_price_in_usd: price_in_usd,
-        sub_price_in_usd: price_in_usd.sub(full_discount_amount_in_usd).sub(half_discount_amount_in_usd),
-        full_discount_in_usd: full_discount_amount_in_usd,
-        half_discount_in_usd: half_discount_amount_in_usd,
-        payment_token_mint_account: payment_token_mint_account.key(),
-        payment_token_user_token_account: payment_token_user_token_account.key(),
-        payment_token_payment_receiver_token_account: payment_token_payment_receiver_token_account.key(),
-        payment_token_full_discount_receiver_token_account: payment_token_full_discount_receiver_token_account.key(),
-        payment_token_half_discount_receiver_token_account: payment_token_half_discount_receiver_token_account.key(),
-    };
-
-    emit!(event);
+    // let event: BuyWithTokenEvent = BuyWithTokenEvent {
+    //     timestamp,
+    //     sale_phase_name,
+    //     tier_id,
+    //     token_id,
+    //     user: ctx.accounts.user.key(),
+    //     price_feed: price_feed_info.key(),
+    //     payment_receiver: payment_receiver.key(),
+    //     full_discount_receiver: full_discount_receiver.key(),
+    //     half_discount_receiver: half_discount_receiver.key(),
+    //     total_price_in_lamport: price_in_lamport,
+    //     sub_price_in_lamport: price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
+    //     full_discount_in_lamport: full_discount_amount_in_lamport,
+    //     half_discount_in_lamport: half_discount_amount_in_lamport,
+    //     pyth_expo,
+    //     pyth_price,
+    //     allow_full_discount,
+    //     full_discount,
+    //     allow_half_discount,
+    //     half_discount,
+    //     total_price_in_usd: price_in_usd,
+    //     sub_price_in_usd: price_in_usd.sub(full_discount_amount_in_usd).sub(half_discount_amount_in_usd),
+    //     full_discount_in_usd: full_discount_amount_in_usd,
+    //     half_discount_in_usd: half_discount_amount_in_usd,
+    //     payment_token_mint_account: payment_token_mint_account.key(),
+    //     payment_token_user_token_account: payment_token_user_token_account.key(),
+    //     payment_token_payment_receiver_token_account: payment_token_payment_receiver_token_account.key(),
+    //     payment_token_full_discount_receiver_token_account: payment_token_full_discount_receiver_token_account.key(),
+    //     payment_token_half_discount_receiver_token_account: payment_token_half_discount_receiver_token_account.key(),
+    // };
+    //
+    // emit!(event);
 
     Ok(())
 }

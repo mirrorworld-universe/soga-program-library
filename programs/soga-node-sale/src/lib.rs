@@ -37,11 +37,11 @@ pub mod soga_node_sale {
 
     pub fn buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAccounts<'info>>,
                                   _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-                                  _collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
+                                  sale_phase_name: String, tier_id: String, order_id: String, quantity: u64,
                                   allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
     ) -> Result<()> {
-        handle_buy(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump, _collection_mint_account_bump,
-                   sale_phase_name, tier_id, token_id, allow_full_discount, full_discount, allow_half_discount, half_discount)
+        handle_buy(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump,
+                   sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount)
     }
 
     pub fn airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, AirdropInputAccounts<'info>>,
@@ -86,10 +86,18 @@ pub mod soga_node_sale {
 
     pub fn buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyWithTokenInputAccounts<'info>>,
                                              _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-                                              sale_phase_name: String, tier_id: String, token_id: String, order_id: String,
+                                             sale_phase_name: String, tier_id: String, order_id: String,
                                              quantity: u64, allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
     ) -> Result<()> {
         handle_buy_with_token(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump,
-                              sale_phase_name, tier_id, token_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount)
+                              sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount)
+    }
+
+    pub fn file_order<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, FillOrderInputAccounts<'info>>,
+                                         _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, _collection_mint_account_bump: u8,
+                                         _user_detail_bump: u8, _order_detail_bump: u8, sale_phase_name: String, tier_id: String, token_id: String, order_id: String,
+    ) -> Result<()> {
+        handle_file_order(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump, _collection_mint_account_bump, _user_detail_bump,
+                          _order_detail_bump, sale_phase_name, tier_id, token_id, order_id)
     }
 }

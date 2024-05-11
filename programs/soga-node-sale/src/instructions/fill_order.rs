@@ -21,16 +21,31 @@ use crate::states::{
     UserTierDetailAccount,
     COLLECTION_ACCOUNT_PREFIX,
     NODE_ACCOUNT_PREFIX,
+    ORDER_DETAIL_ACCOUNT_PREFIX,
+    OrderDetailAccount,
 };
 
 use crate::events::{AirdropEvent};
 
-use crate::utils::{check_signing_authority, check_phase_tier_collection, check_phase_tier_is_completed, check_token_id, check_token_quantity_out_of_range, check_mint_limit, check_phase_airdrop, check_phase_tier_airdrop, check_token_id_out_of_range};
+use crate::utils::{
+    check_signing_authority,
+    check_phase_tier_collection,
+    check_phase_tier_is_completed,
+    check_token_id,
+    check_token_quantity_out_of_range,
+    check_mint_limit,
+    check_phase_airdrop,
+    check_phase_tier_airdrop,
+    check_token_id_out_of_range,
+    check_order_token_id_filled,
+    check_order_token_id,
+    check_order_is_filled,
+};
 
 #[derive(Accounts)]
-#[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-_collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String)]
-pub struct AirdropInputAccounts<'info> {
+#[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, _collection_mint_account_bump: u8,
+_user_detail_bump: u8, _order_detail_bump: u8, sale_phase_name: String, tier_id: String, token_id: String, order_id: String)]
+pub struct FillOrderInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -41,7 +56,6 @@ pub struct AirdropInputAccounts<'info> {
     pub user: AccountInfo<'info>,
 
     #[account(
-    mut,
     seeds = [
     SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
     sale_phase_name.as_ref(),
@@ -62,30 +76,39 @@ pub struct AirdropInputAccounts<'info> {
     pub sale_phase_tier_detail: Box<Account<'info, SogaNodeSalePhaseTierDetailAccount>>,
 
     #[account(
-    init_if_needed,
-    payer = payer,
-    space = UserDetailAccount::space(),
     seeds = [
     USER_DETAIL_ACCOUNT_PREFIX.as_ref(),
     sale_phase_detail.key().as_ref(),
     user.key().as_ref(),
     ],
-    bump,
+    bump = _user_detail_bump,
     )]
     pub user_detail: Box<Account<'info, UserDetailAccount>>,
 
+    // #[account(
+    // init_if_needed,
+    // payer = payer,
+    // space = UserTierDetailAccount::space(),
+    // seeds = [
+    // USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+    // user_detail.key().as_ref(),
+    // sale_phase_tier_detail.key().as_ref(),
+    // ],
+    // bump,
+    // )]
+    // pub user_tier_detail: Box<Account<'info, UserTierDetailAccount>>,
+
     #[account(
-    init_if_needed,
-    payer = payer,
-    space = UserTierDetailAccount::space(),
+    mut,
     seeds = [
-    USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+    ORDER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+    sale_phase_detail.key().as_ref(),
     user_detail.key().as_ref(),
-    sale_phase_tier_detail.key().as_ref(),
+    order_id.as_ref(),
     ],
-    bump,
+    bump = _order_detail_bump,
     )]
-    pub user_tier_detail: Box<Account<'info, UserTierDetailAccount>>,
+    pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
     #[account(
     mut,
@@ -134,9 +157,9 @@ pub struct AirdropInputAccounts<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, AirdropInputAccounts<'info>>,
-                                         _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
-                                         _collection_mint_account_bump: u8, sale_phase_name: String, tier_id: String, token_id: String,
+pub fn handle_file_order<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, FillOrderInputAccounts<'info>>,
+                                            _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, _collection_mint_account_bump: u8,
+                                            _user_detail_bump: u8, _order_detail_bump: u8, sale_phase_name: String, tier_id: String, token_id: String, order_id: String,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -148,27 +171,20 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> = &ctx.accounts.sale_phase_detail;
     let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &ctx.accounts.sale_phase_tier_detail;
 
+    let token_id_int: u64 = token_id.clone().parse().unwrap();
+    let order_detail: &Box<Account<OrderDetailAccount>> = &ctx.accounts.order_detail;
+
     // Checks
-    check_phase_airdrop(sale_phase_detail.airdrop_enable)?;
-    check_phase_tier_airdrop(sale_phase_tier_detail.airdrop_enable)?;
-
-
     check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
-
     check_phase_tier_collection(sale_phase_tier_detail.collection_mint_address, ctx.accounts.collection_mint_account.key())?;
 
-    check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
+    check_order_is_filled(order_detail.is_completed)?;
 
-    let token_id_int: u64 = token_id.clone().parse().unwrap();
-    let current_token_id: u64 = sale_phase_tier_detail.total_mint + 1;
+    check_order_token_id(order_detail.token_ids.contains(&token_id_int))?;
 
-    check_token_id(current_token_id, token_id_int)?;
+    let index = order_detail.token_ids.iter().position(|r| r == &token_id_int).unwrap();
 
-    check_token_id_out_of_range(sale_phase_tier_detail.total_mint, token_id_int, sale_phase_tier_detail.quantity)?;
-
-    let user_tier_detail: &Box<Account<UserTierDetailAccount>> = &ctx.accounts.user_tier_detail;
-
-    check_mint_limit(sale_phase_tier_detail.mint_limit, user_tier_detail.total_mint)?;
+    check_order_token_id_filled(order_detail.is_token_ids_minted[index])?;
 
     let sale_phase_detail_key: Pubkey = ctx.accounts.sale_phase_detail.key();
 
@@ -280,46 +296,27 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
 
 
     // Update
-    let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
-    sale_phase_detail.total_buy += 1;
-    sale_phase_detail.total_airdrop += 1;
-    sale_phase_detail.last_block_timestamp = timestamp;
+    let order_detail: &mut Box<Account<OrderDetailAccount>> = &mut ctx.accounts.order_detail;
+    order_detail.last_block_timestamp = timestamp;
 
+    order_detail.is_token_ids_minted[index] = true;
 
-    let sale_phase_tier_detail: &mut Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &mut ctx.accounts.sale_phase_tier_detail;
-
-    sale_phase_tier_detail.total_mint += 1;
-    sale_phase_tier_detail.total_airdrop += 1;
-    sale_phase_tier_detail.last_block_timestamp = timestamp;
-
-    if sale_phase_tier_detail.total_mint >= sale_phase_tier_detail.quantity {
-        sale_phase_tier_detail.is_completed = true;
-        sale_phase_detail.total_completed_tiers += 1;
+    if !order_detail.is_token_ids_minted.contains(&false) {
+        order_detail.is_completed = true;
     }
 
-    let user_detail: &mut Box<Account<UserDetailAccount>> = &mut ctx.accounts.user_detail;
-    user_detail.total_airdrop += 1;
-    user_detail.total_mint += 1;
-    user_detail.last_block_timestamp = timestamp;
-
-    let user_tier_detail: &mut Box<Account<UserTierDetailAccount>> = &mut ctx.accounts.user_tier_detail;
-    user_tier_detail.total_airdrop += 1;
-    user_tier_detail.total_mint += 1;
-    user_tier_detail.last_block_timestamp = timestamp;
-
     // Event
-
-    let event: AirdropEvent = AirdropEvent {
-        timestamp,
-        sale_phase_name,
-        tier_id,
-        token_id,
-        user: ctx.accounts.user.key(),
-        collection_mint_account: ctx.accounts.collection_mint_account.key(),
-        node_mint_account: ctx.accounts.node_mint_account.key(),
-    };
-
-    emit!(event);
+    // let event: AirdropEvent = AirdropEvent {
+    //     timestamp,
+    //     sale_phase_name,
+    //     tier_id,
+    //     token_id,
+    //     user: ctx.accounts.user.key(),
+    //     collection_mint_account: ctx.accounts.collection_mint_account.key(),
+    //     node_mint_account: ctx.accounts.node_mint_account.key(),
+    // };
+    //
+    // emit!(event);
 
     Ok(())
 }

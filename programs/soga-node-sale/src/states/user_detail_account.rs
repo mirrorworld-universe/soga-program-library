@@ -19,10 +19,6 @@ pub struct UserDetailAccount {
 
     pub total_discount: u64,
 
-    pub total_full_discount_received: u64,
-
-    pub total_half_discount_received: u64,
-
     pub total_orders: u64,
 }
 
@@ -36,8 +32,6 @@ impl UserDetailAccount {
             + 8 // total_airdrop
             + 8 // total_payment
             + 8 // total_discount
-            + 8 // total_full_discount_received
-            + 8 // total_half_discount_received
             + 8 // total_orders
     }
 }
