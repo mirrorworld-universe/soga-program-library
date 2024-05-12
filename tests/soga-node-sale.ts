@@ -274,7 +274,7 @@ const handleUpdateSalePhasePaymentTokenEvent = (ev: UpdateSalePhasePaymentTokenE
 const handleBuyEvent = (ev: BuyEvent) =>
     console.log(`${BuyEventName} ==> `, ev);
 
-const handleBuyWithTokenEvent = (ev: BuyEvent) =>
+const handleBuyWithTokenEvent = (ev: BuyWithTokenEvent) =>
     console.log(`${BuyWithTokenEventName} ==> `, ev);
 
 const handleAirdropEvent = (ev: AirdropEvent) =>
@@ -988,7 +988,12 @@ describe("soga_node_sale", () => {
 
         // console.log("full account sol balance: ", (await connection.getBalance(fullReceiverKeypair.publicKey)) / LAMPORTS_PER_SOL);
         // console.log("half account sol balance: ", (await connection.getBalance(halfReceiverKeypair.publicKey)) / LAMPORTS_PER_SOL);
-        // console.log("receive account sol balance: ", (await connection.getBalance(priceReceiverKeypair.publicKey)) / LAMPORTS_PER_SOL);
+        // console.log("receive account sol balance: ", (await connection.getTokenAccountBalance(priceReceiverKeypair.publicKey)).value./ LAMPORTS_PER_SOL);
+
+        console.log("priceReceiverPaymentTokenAccount: ", await connection.getTokenAccountBalance(priceReceiverPaymentTokenAccount));
+        console.log("fullDiscountReceiverPaymentTokenAccount: ", await connection.getTokenAccountBalance(fullDiscountReceiverPaymentTokenAccount));
+        console.log("halfDiscountPaymentTokenAccount: ", await connection.getTokenAccountBalance(halfDiscountPaymentTokenAccount));
+
     });
 
     it("Airdrop Node One Sale Phase One Tier One", async () => {

@@ -34,6 +34,7 @@ use crate::utils::{
     check_phase_airdrop,
     check_phase_tier_airdrop,
     check_token_id_out_of_range,
+    check_tier_id
 };
 
 #[derive(Accounts)]
@@ -149,6 +150,8 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
+    let tier_id_int: u32 = tier_id.clone().parse().unwrap();
+
     let collection_metadata = &ctx.remaining_accounts[0];
     let collection_master_edition = &ctx.remaining_accounts[1];
     let node_metadata = &ctx.remaining_accounts[2];
@@ -161,8 +164,9 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
     check_phase_airdrop(sale_phase_detail.airdrop_enable)?;
     check_phase_tier_airdrop(sale_phase_tier_detail.airdrop_enable)?;
 
-
     check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+
+    check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
 
     check_phase_tier_collection(sale_phase_tier_detail.collection_mint_address, ctx.accounts.collection_mint_account.key())?;
 

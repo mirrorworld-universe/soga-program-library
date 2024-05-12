@@ -39,6 +39,7 @@ use crate::utils::{
     check_phase_buy_with_token,
     check_phase_tier_buy_with_token,
     check_quantity,
+    check_tier_id
 };
 
 #[derive(Accounts)]
@@ -125,6 +126,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
+    let tier_id_int: u32 = tier_id.clone().parse().unwrap();
+
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> = &ctx.accounts.sale_phase_detail;
     let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &ctx.accounts.sale_phase_tier_detail;
 
@@ -158,6 +161,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     check_price_feed(sale_phase_payment_token_detail.price_feed_address, price_feed_info.key())?;
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
+
+    check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
 

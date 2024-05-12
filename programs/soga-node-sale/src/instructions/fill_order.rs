@@ -76,19 +76,6 @@ pub struct FillOrderInputAccounts<'info> {
     )]
     pub user_detail: Box<Account<'info, UserDetailAccount>>,
 
-    // #[account(
-    // init_if_needed,
-    // payer = payer,
-    // space = UserTierDetailAccount::space(),
-    // seeds = [
-    // USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    // user_detail.key().as_ref(),
-    // sale_phase_tier_detail.key().as_ref(),
-    // ],
-    // bump,
-    // )]
-    // pub user_tier_detail: Box<Account<'info, UserTierDetailAccount>>,
-
     #[account(
     mut,
     seeds = [

@@ -21,18 +21,7 @@ use crate::events::{
     BuyEvent
 };
 
-use crate::utils::{
-    check_signing_authority,
-    check_price_feed,
-    check_payment_receiver,
-    check_phase_tier_is_completed,
-    check_token_quantity_out_of_range,
-    check_mint_limit,
-    check_phase_buy,
-    check_phase_tier_buy,
-    check_invalid_discount,
-    check_quantity,
-};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_mint_limit, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -119,6 +108,8 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
+    let tier_id_int: u32 = tier_id.clone().parse().unwrap();
+
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> = &ctx.accounts.sale_phase_detail;
     let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &ctx.accounts.sale_phase_tier_detail;
 
@@ -137,6 +128,8 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     check_price_feed(sale_phase_detail.price_feed_address, price_feed_info.key())?;
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
+
+    check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
 
