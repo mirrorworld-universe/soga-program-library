@@ -71,6 +71,9 @@ pub enum SogaNodeSaleError {
     #[msg("Invalid quantity")]
     InvalidQuantity,
 
+    #[msg("Invalid order id")]
+    InvalidOrderId,
+
     #[msg("Invalid order token id")]
     InvalidOrderTokenId,
 

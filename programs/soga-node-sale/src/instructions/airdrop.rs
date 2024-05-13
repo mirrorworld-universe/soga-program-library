@@ -294,13 +294,12 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
 
     // Update
     let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
-    sale_phase_detail.total_buy += 1;
+    sale_phase_detail.total_mint += 1;
     sale_phase_detail.total_airdrop += 1;
     sale_phase_detail.last_block_timestamp = timestamp;
 
 
     let sale_phase_tier_detail: &mut Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &mut ctx.accounts.sale_phase_tier_detail;
-
     sale_phase_tier_detail.total_mint += 1;
     sale_phase_tier_detail.total_airdrop += 1;
     sale_phase_tier_detail.last_block_timestamp = timestamp;
@@ -311,13 +310,13 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
     }
 
     let user_detail: &mut Box<Account<UserDetailAccount>> = &mut ctx.accounts.user_detail;
-    user_detail.total_airdrop += 1;
     user_detail.total_mint += 1;
+    user_detail.total_airdrop += 1;
     user_detail.last_block_timestamp = timestamp;
 
     let user_tier_detail: &mut Box<Account<UserTierDetailAccount>> = &mut ctx.accounts.user_tier_detail;
-    user_tier_detail.total_airdrop += 1;
     user_tier_detail.total_mint += 1;
+    user_tier_detail.total_airdrop += 1;
     user_tier_detail.last_block_timestamp = timestamp;
 
     // Event

@@ -99,6 +99,14 @@ pub fn check_token_id_out_of_range(total_minted_token_id_from_account: u64, curr
 }
 
 pub fn check_mint_limit(mint_limit_from_config: u64, mint_limit_from_user: u64) -> Result<()> {
+    if mint_limit_from_user >= mint_limit_from_config  {
+        return Err(SogaNodeSaleError::MintLimitExceeded.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_mint_limit_with_quantity(mint_limit_from_config: u64, mint_limit_from_user: u64) -> Result<()> {
     if mint_limit_from_user > mint_limit_from_config  {
         return Err(SogaNodeSaleError::MintLimitExceeded.into());
     }
@@ -208,6 +216,14 @@ pub fn check_order_token_id_filled(value: bool) -> Result<()> {
 pub fn check_order_token_id(value: bool) -> Result<()> {
     if !value  {
         return Err(SogaNodeSaleError::InvalidOrderTokenId.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_order_id(value_from_account: u64, valur_from_param: u64) -> Result<()> {
+    if value_from_account != valur_from_param {
+        return Err(SogaNodeSaleError::InvalidOrderId.into());
     }
 
     Ok(())

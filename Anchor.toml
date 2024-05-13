@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-soga-node-sale = "2VHjvzPThzEXeSMWgKTBtQM9LuB6Qh2a6E9XNJieajFG"
+soga-node-sale = "4cQkDBqFZmuiuwsQnbrFEU5kcRUTCYS1agegC3yLVYQq"
 
 [registry]
 url = "https://api.apr.dev"

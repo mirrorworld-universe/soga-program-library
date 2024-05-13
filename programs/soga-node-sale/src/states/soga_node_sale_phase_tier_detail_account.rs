@@ -29,8 +29,6 @@ pub struct SogaNodeSalePhaseTierDetailAccount {
 
     pub total_discount: u64,
 
-    pub total_payment_received: u64,
-
     pub buy_enable: bool,
 
     pub buy_with_token_enable: bool,
@@ -53,7 +51,6 @@ impl SogaNodeSalePhaseTierDetailAccount {
             + 8 // total_airdrop
             + 8 // total_payment
             + 8 // total_discount
-            + 8 // total_payment_received
             + 1 // buy_enable
             + 1 // buy_with_token_enable
             + 1 // airdrop_enable

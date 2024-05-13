@@ -26,21 +26,7 @@ use crate::events::{
     BuyWithTokenEvent
 };
 
-use crate::utils::{
-    check_signing_authority,
-    check_price_feed,
-    check_payment_receiver,
-    check_phase_tier_is_completed,
-    check_token_quantity_out_of_range,
-    check_mint_limit,
-    check_invalid_discount,
-    check_payment_token_mint_account,
-    check_payment_token,
-    check_phase_buy_with_token,
-    check_phase_tier_buy_with_token,
-    check_quantity,
-    check_tier_id
-};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -127,6 +113,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
     let tier_id_int: u32 = tier_id.clone().parse().unwrap();
+    let order_id_int: u64 = order_id.clone().parse().unwrap();
 
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> = &ctx.accounts.sale_phase_detail;
     let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &ctx.accounts.sale_phase_tier_detail;
@@ -170,9 +157,13 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_token_quantity_out_of_range(sale_phase_tier_detail.total_mint + quantity, sale_phase_tier_detail.quantity)?;
 
+    let user_detail: &Box<Account<UserDetailAccount>> = &ctx.accounts.user_detail;
+
+    check_order_id(user_detail.total_orders + 1, order_id_int)?;
+
     let user_tier_detail: &Box<Account<UserTierDetailAccount>> = &ctx.accounts.user_tier_detail;
 
-    check_mint_limit(sale_phase_tier_detail.mint_limit, user_tier_detail.total_mint + quantity)?;
+    check_mint_limit_with_quantity(sale_phase_tier_detail.mint_limit, user_tier_detail.total_mint + quantity)?;
 
     check_invalid_discount(full_discount, half_discount)?;
 
@@ -259,8 +250,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     };
 
     let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
-    sale_phase_detail.total_buy_with_token += quantity;
     sale_phase_detail.total_mint += quantity;
+    sale_phase_detail.total_buy_with_token += quantity;
     sale_phase_detail.total_payment += price_in_usd;
     sale_phase_detail.total_discount += full_discount_amount_in_usd;
     sale_phase_detail.total_discount += half_discount_amount_in_usd;
@@ -281,8 +272,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     }
 
     let user_detail: &mut Box<Account<UserDetailAccount>> = &mut ctx.accounts.user_detail;
-    user_detail.total_buy_with_token += quantity;
     user_detail.total_mint += quantity;
+    user_detail.total_buy_with_token += quantity;
     user_detail.total_payment += price_in_usd;
     user_detail.total_discount += full_discount_amount_in_usd;
     user_detail.total_discount += half_discount_amount_in_usd;
@@ -290,8 +281,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     user_detail.last_block_timestamp = timestamp;
 
     let user_tier_detail: &mut Box<Account<UserTierDetailAccount>> = &mut ctx.accounts.user_tier_detail;
-    user_tier_detail.total_buy_with_token += quantity;
     user_tier_detail.total_mint += quantity;
+    user_tier_detail.total_buy_with_token += quantity;
     user_tier_detail.total_payment += price_in_usd;
     user_tier_detail.total_discount += full_discount_amount_in_usd;
     user_tier_detail.total_discount += half_discount_amount_in_usd;

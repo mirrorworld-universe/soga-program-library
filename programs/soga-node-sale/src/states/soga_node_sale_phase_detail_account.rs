@@ -17,8 +17,6 @@ pub struct SogaNodeSalePhaseDetailAccount {
 
     pub total_discount: u64,
 
-    pub total_payment_received: u64,
-
     pub total_tiers: u32,
 
     pub total_initialize_tiers: u32,
@@ -55,7 +53,6 @@ impl SogaNodeSalePhaseDetailAccount {
             + 32 // payment_receiver
             + 8 // total_payment
             + 8 // total_discount
-            + 8 // total_payment_received
             + 4 // total_tiers
             + 4 // total_initialize_tiers
             + 4 // total_completed_tiers

@@ -503,7 +503,6 @@ describe("soga_node_sale", () => {
 
         assert(salePhaseData.totalPayment.toString() === "0");
         assert(salePhaseData.totalDiscount.toString() === "0");
-        assert(salePhaseData.totalPaymentReceived.toString() === "0");
 
         assert(salePhaseData.totalMint.toString() === "0");
         assert(salePhaseData.totalBuy.toString() === "0");
@@ -548,7 +547,6 @@ describe("soga_node_sale", () => {
 
         assert(salePhaseData.totalPayment.toString() === "0");
         assert(salePhaseData.totalDiscount.toString() === "0");
-        assert(salePhaseData.totalPaymentReceived.toString() === "0");
 
         assert(salePhaseData.totalMint.toString() === "0");
         assert(salePhaseData.totalBuy.toString() === "0");
