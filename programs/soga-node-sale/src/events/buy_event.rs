@@ -12,6 +12,8 @@ pub struct BuyEvent {
 
     pub user: Pubkey,
 
+    pub user_payer: Pubkey,
+
     pub price_feed: Pubkey,
 
     pub payment_receiver: Pubkey,

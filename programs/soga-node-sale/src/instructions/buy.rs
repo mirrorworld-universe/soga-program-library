@@ -21,7 +21,7 @@ use crate::events::{
     BuyEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -33,7 +33,10 @@ pub struct BuyInputAccounts<'info> {
     pub signing_authority: Signer<'info>,
 
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub user_payer: Signer<'info>,
+
+    /// CHECK: user
+    pub user: AccountInfo<'info>,
 
     #[account(
     mut,
@@ -120,6 +123,8 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     let half_discount_receiver = &ctx.remaining_accounts[3];
 
     // Checks
+    check_value_is_zero(quantity as usize)?;
+
     check_phase_buy(sale_phase_detail.buy_enable)?;
 
     check_phase_tier_buy(sale_phase_tier_detail.buy_enable)?;
@@ -168,7 +173,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         full_discount_amount_in_usd = (full_discount * price_in_usd) / 100;
 
         let deposit_full_discount_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.user.key(),
+            &ctx.accounts.user_payer.key(),
             &full_discount_receiver.key(),
             full_discount_amount_in_lamport,
         );
@@ -176,7 +181,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         anchor_lang::solana_program::program::invoke(
             &deposit_full_discount_amount_ix,
             &[
-                ctx.accounts.user.to_account_info(),
+                ctx.accounts.user_payer.to_account_info(),
                 full_discount_receiver.to_account_info(),
             ],
         )?;
@@ -190,7 +195,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         half_discount_amount_in_usd = (half_discount * price_in_usd) / 100;
 
         let deposit_half_discount_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.user.key(),
+            &ctx.accounts.user_payer.key(),
             &half_discount_receiver.key(),
             half_discount_amount_in_lamport,
         );
@@ -198,14 +203,14 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         anchor_lang::solana_program::program::invoke(
             &deposit_half_discount_amount_ix,
             &[
-                ctx.accounts.user.to_account_info(),
+                ctx.accounts.user_payer.to_account_info(),
                 half_discount_receiver.to_account_info(),
             ],
         )?;
     }
 
     let deposit_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
-        &ctx.accounts.user.key(),
+        &ctx.accounts.user_payer.key(),
         &payment_receiver.key(),
         price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
     );
@@ -213,7 +218,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     anchor_lang::solana_program::program::invoke(
         &deposit_amount_ix,
         &[
-            ctx.accounts.user.to_account_info(),
+            ctx.accounts.user_payer.to_account_info(),
             payment_receiver.to_account_info(),
         ],
     )?;
@@ -287,6 +292,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         tier_id,
         order_id,
         user: ctx.accounts.user.key(),
+        user_payer: ctx.accounts.user_payer.key(),
         price_feed: price_feed_info.key(),
         payment_receiver: payment_receiver.key(),
         full_discount_receiver: full_discount_receiver.key(),

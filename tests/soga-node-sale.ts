@@ -132,6 +132,8 @@ interface BuyEvent {
 
     user: PublicKey,
 
+    userPayer: PublicKey,
+
     priceFeed: PublicKey,
 
     paymentReceiver: PublicKey,
@@ -178,6 +180,8 @@ interface BuyWithTokenEvent {
 
     user: PublicKey,
 
+    userPayer: PublicKey,
+
     priceFeed: PublicKey,
 
     paymentReceiver: PublicKey,
@@ -212,7 +216,7 @@ interface BuyWithTokenEvent {
 
     halfDiscount: BN,
 
-    paymentTokenUserTokenAccount: PublicKey,
+    paymentTokenUserPayerTokenAccount: PublicKey,
 
     paymentTokenPaymentReceiverTokenAccount: PublicKey,
 
@@ -806,6 +810,7 @@ describe("soga_node_sale", () => {
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
+                userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -836,8 +841,8 @@ describe("soga_node_sale", () => {
                     isSigner: false
                 }
             ]).preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair, userAKeypair])
-            .rpc({});
+            .signers([signingAuthorityKeypair, userBKeypair])
+            .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
 
@@ -905,6 +910,7 @@ describe("soga_node_sale", () => {
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
+                userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -950,7 +956,7 @@ describe("soga_node_sale", () => {
                     isSigner: false
                 },
                 {
-                    pubkey: userAPaymentTokenAccount, // 7
+                    pubkey: userBPaymentTokenAccount, // 7
                     isWritable: true,
                     isSigner: false
                 },
@@ -975,7 +981,7 @@ describe("soga_node_sale", () => {
                 createFullDiscountTokenAccount,
                 createHalfDiscountTokenAccount
             ])
-            .signers([signingAuthorityKeypair, userAKeypair])
+            .signers([signingAuthorityKeypair, userBKeypair])
             .rpc({});
 
         // console.log("Your transaction signature", tx);
@@ -1201,6 +1207,111 @@ describe("soga_node_sale", () => {
         const tierId: number = 1;
         const tokenIdId: number = 2;
         const orderId = 1;
+
+        const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
+            tierId.toString(), sogaNodeSalePhaseOnePDA);
+        console.log("Node Sale Phase one tier two: ", nodeSalePhaseTierPda.toBase58());
+
+        const [nodeSalePhaseTierCollectionPda, nodeSalePhaseTierCollectionBump] = getSogaNodeSalePhaseDetailTierCollectionAccountPdaAndBump(program.programId, COLLECTION_ACCOUNT_PREFIX,
+            nodeSalePhaseTierPda);
+        console.log("Node Sale Phase one tier two collection: ", nodeSalePhaseTierCollectionPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMasterPda = getMasterPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Master: ", nodeSalePhaseTierCollectionMasterPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMetadataPda = getMetadataPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Metadata: ", nodeSalePhaseTierCollectionMetadataPda.toBase58());
+        //
+        // const nodeSalePhaseTierCollectionTokenAccount = await getAssociatedTokenAddress(nodeSalePhaseTierCollectionPda, nodeSalePhaseTierPda, true, TOKEN_PROGRAM_ID);
+        // console.log("Node Sale Phase one tier two collection token account: ", nodeSalePhaseTierCollectionTokenAccount.toBase58());
+
+        const [userDetailPda, userDetailBump] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX,
+            sogaNodeSalePhaseOnePDA, userAKeypair.publicKey);
+        console.log("User detail pda: ", userDetailPda.toBase58());
+
+        // const [userPhaseTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX,
+        //     userDetailPda, nodeSalePhaseTierPda);
+        // console.log("User tier detail pda: ", userPhaseTierDetailPda.toBase58());
+
+        const [orderPda, orderBump] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
+
+
+        const [nodeMintAccountPda] = getNodeMintAccount(program.programId, NODE_ACCOUNT_PREFIX,
+            nodeSalePhaseTierCollectionPda, tokenIdId.toString());
+        console.log("Node Mint Account Pda: ", nodeMintAccountPda.toBase58());
+
+        const nodeMintAccountMasterPda = getMasterPda(nodeMintAccountPda);
+        console.log("node mint account master pda: ", nodeMintAccountMasterPda.toBase58());
+
+        const nodeMintAccountMetadataPda = getMetadataPda(nodeMintAccountPda)
+        console.log("node mint account metadata pda: ", nodeMintAccountMetadataPda.toBase58());
+
+
+        const nodeUserTokenAccount = await getAssociatedTokenAddress(nodeMintAccountPda, userAKeypair.publicKey, true, TOKEN_PROGRAM_ID);
+        console.log("node user token account: ", nodeUserTokenAccount.toBase58());
+
+
+        const tx = await program.methods.fileOrder(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump, nodeSalePhaseTierCollectionBump,
+            userDetailBump, orderBump,
+            phaseOne, tierId.toString(), tokenIdId.toString(), orderId.toString())
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                user: userAKeypair.publicKey,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+                salePhaseTierDetail: nodeSalePhaseTierPda,
+                userDetail: userDetailPda,
+                orderDetail: orderPda,
+                collectionMintAccount: nodeSalePhaseTierCollectionPda,
+                nodeMintAccount: nodeMintAccountPda,
+                userTokenAccount: nodeUserTokenAccount,
+                tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+                rent: SYSVAR_RENT_PUBKEY
+            }).remainingAccounts([
+                {
+                    pubkey: nodeSalePhaseTierCollectionMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeSalePhaseTierCollectionMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                }
+            ])
+
+            .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
+            .signers([signingAuthorityKeypair])
+            .rpc({skipPreflight: true});
+
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
+
+    });
+
+    it("Fill Order Three", async () => {
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        const tierId: number = 1;
+        const tokenIdId: number = 3;
+        const orderId = 2;
 
         const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
             tierId.toString(), sogaNodeSalePhaseOnePDA);

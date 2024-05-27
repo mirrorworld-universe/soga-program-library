@@ -12,6 +12,8 @@ pub struct BuyWithTokenEvent {
 
     pub user: Pubkey,
 
+    pub user_payer: Pubkey,
+
     pub price_feed: Pubkey,
 
     pub payment_receiver: Pubkey,
@@ -46,7 +48,7 @@ pub struct BuyWithTokenEvent {
 
     pub payment_token_mint_account: Pubkey,
 
-    pub payment_token_user_token_account: Pubkey,
+    pub payment_token_user_payer_token_account: Pubkey,
 
     pub payment_token_payment_receiver_token_account: Pubkey,
 

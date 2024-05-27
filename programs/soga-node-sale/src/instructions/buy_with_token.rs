@@ -26,7 +26,7 @@ use crate::events::{
     BuyWithTokenEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -38,7 +38,10 @@ pub struct BuyWithTokenInputAccounts<'info> {
     pub signing_authority: Signer<'info>,
 
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub user_payer: Signer<'info>,
+
+    /// CHECK: user
+    pub user: AccountInfo<'info>,
 
     #[account(
     mut,
@@ -127,7 +130,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     let payment_token_mint_account = &ctx.remaining_accounts[5];
     let payment_token_program = &ctx.remaining_accounts[6];
 
-    let payment_token_user_token_account = &ctx.remaining_accounts[7];
+    let payment_token_user_payer_token_account = &ctx.remaining_accounts[7];
     let payment_token_payment_receiver_token_account = &ctx.remaining_accounts[8];
     let payment_token_full_discount_receiver_token_account = &ctx.remaining_accounts[9];
     let payment_token_half_discount_receiver_token_account = &ctx.remaining_accounts[10];
@@ -135,6 +138,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     let sale_phase_payment_token_detail = SogaNodeSalePhasePaymentTokenDetailAccount::try_deserialize(&mut &**sale_phase_payment_token_detail_info.try_borrow_mut_data()?).unwrap();
 
     // Checks
+    check_value_is_zero(quantity as usize)?;
+
     check_phase_buy_with_token(sale_phase_detail.buy_with_token_enable)?;
 
     check_phase_tier_buy_with_token(sale_phase_tier_detail.buy_with_token_enable)?;
@@ -186,10 +191,10 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         full_discount_amount_in_usd = (full_discount * price_in_usd) / 100;
 
         let cpi_accounts = TransferChecked {
-            from: payment_token_user_token_account.to_account_info(),
+            from: payment_token_user_payer_token_account.to_account_info(),
             mint: payment_token_mint_account.to_account_info(),
             to: payment_token_full_discount_receiver_token_account.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
+            authority: ctx.accounts.user_payer.to_account_info(),
         };
         let cpi_program = payment_token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
@@ -204,10 +209,10 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         half_discount_amount_in_usd = (half_discount * price_in_usd) / 100;
 
         let cpi_accounts = TransferChecked {
-            from: payment_token_user_token_account.to_account_info(),
+            from: payment_token_user_payer_token_account.to_account_info(),
             mint: payment_token_mint_account.to_account_info(),
             to: payment_token_half_discount_receiver_token_account.to_account_info(),
-            authority: ctx.accounts.user.to_account_info(),
+            authority: ctx.accounts.user_payer.to_account_info(),
         };
         let cpi_program = payment_token_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
@@ -215,10 +220,10 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     }
 
     let cpi_accounts = TransferChecked {
-        from: payment_token_user_token_account.to_account_info(),
+        from: payment_token_user_payer_token_account.to_account_info(),
         mint: payment_token_mint_account.to_account_info(),
         to: payment_token_payment_receiver_token_account.to_account_info(),
-        authority: ctx.accounts.user.to_account_info(),
+        authority: ctx.accounts.user_payer.to_account_info(),
     };
     let cpi_program = payment_token_program.to_account_info();
     let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
@@ -295,6 +300,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         tier_id,
         order_id,
         user: ctx.accounts.user.key(),
+        user_payer: ctx.accounts.user_payer.key(),
         price_feed: price_feed_info.key(),
         payment_receiver: payment_receiver.key(),
         full_discount_receiver: full_discount_receiver.key(),
@@ -312,7 +318,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         full_discount_in_usd: full_discount_amount_in_usd,
         half_discount_in_usd: half_discount_amount_in_usd,
         payment_token_mint_account: payment_token_mint_account.key(),
-        payment_token_user_token_account: payment_token_user_token_account.key(),
+        payment_token_user_payer_token_account: payment_token_user_payer_token_account.key(),
         payment_token_payment_receiver_token_account: payment_token_payment_receiver_token_account.key(),
         payment_token_full_discount_receiver_token_account: payment_token_full_discount_receiver_token_account.key(),
         payment_token_half_discount_receiver_token_account: payment_token_half_discount_receiver_token_account.key(),
