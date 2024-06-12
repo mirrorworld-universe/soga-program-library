@@ -47,4 +47,6 @@ pub struct BuyEvent {
     pub half_discount_in_usd: u64,
 
     pub quantity: u64,
+
+    pub is_whitelist: bool,
 }

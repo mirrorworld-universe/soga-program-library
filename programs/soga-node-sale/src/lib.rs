@@ -39,9 +39,11 @@ pub mod soga_node_sale {
                                   _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
                                   sale_phase_name: String, tier_id: String, order_id: String, quantity: u64,
                                   allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
+                                  is_whitelist: bool,
     ) -> Result<()> {
         handle_buy(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump,
-                   sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount)
+                   sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount,
+        is_whitelist)
     }
 
     pub fn airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, AirdropInputAccounts<'info>>,
@@ -88,9 +90,11 @@ pub mod soga_node_sale {
                                              _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
                                              sale_phase_name: String, tier_id: String, order_id: String,
                                              quantity: u64, allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
+                                             is_whitelist: bool,
     ) -> Result<()> {
         handle_buy_with_token(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump,
-                              sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount)
+                              sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount,
+                              is_whitelist)
     }
 
     pub fn file_order<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, FillOrderInputAccounts<'info>>,

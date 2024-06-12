@@ -39,63 +39,63 @@ pub struct BuyInputAccounts<'info> {
     pub user: AccountInfo<'info>,
 
     #[account(
-    mut,
-    seeds = [
-    SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    ],
-    bump = _sale_phase_detail_bump,
+        mut,
+        seeds = [
+        SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_name.as_ref(),
+        ],
+        bump = _sale_phase_detail_bump,
     )]
     pub sale_phase_detail: Box<Account<'info, SogaNodeSalePhaseDetailAccount>>,
 
     #[account(
-    mut,
-    seeds = [
-    SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    tier_id.as_ref()
-    ],
-    bump = _sale_phase_tier_detail_bump,
+        mut,
+        seeds = [
+        SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_detail.key().as_ref(),
+        tier_id.as_ref()
+        ],
+        bump = _sale_phase_tier_detail_bump,
     )]
     pub sale_phase_tier_detail: Box<Account<'info, SogaNodeSalePhaseTierDetailAccount>>,
 
     #[account(
-    init_if_needed,
-    payer = payer,
-    space = UserDetailAccount::space(),
-    seeds = [
-    USER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    user.key().as_ref(),
-    ],
-    bump,
+        init_if_needed,
+        payer = payer,
+        space = UserDetailAccount::space(),
+        seeds = [
+        USER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_detail.key().as_ref(),
+        user.key().as_ref(),
+        ],
+        bump,
     )]
     pub user_detail: Box<Account<'info, UserDetailAccount>>,
 
     #[account(
-    init_if_needed,
-    payer = payer,
-    space = UserTierDetailAccount::space(),
-    seeds = [
-    USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    user_detail.key().as_ref(),
-    sale_phase_tier_detail.key().as_ref(),
-    ],
-    bump,
+        init_if_needed,
+        payer = payer,
+        space = UserTierDetailAccount::space(),
+        seeds = [
+        USER_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        user_detail.key().as_ref(),
+        sale_phase_tier_detail.key().as_ref(),
+        ],
+        bump,
     )]
     pub user_tier_detail: Box<Account<'info, UserTierDetailAccount>>,
 
     #[account(
-    init,
-    payer = payer,
-    space = OrderDetailAccount::space(quantity),
-    seeds = [
-    ORDER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    user_detail.key().as_ref(),
-    order_id.as_ref(),
-    ],
-    bump,
+        init,
+        payer = payer,
+        space = OrderDetailAccount::space(quantity),
+        seeds = [
+        ORDER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_detail.key().as_ref(),
+        user_detail.key().as_ref(),
+        order_id.as_ref(),
+        ],
+        bump,
     )]
     pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
@@ -108,6 +108,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
                                      _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
                                      sale_phase_name: String, tier_id: String, order_id: String, quantity: u64,
                                      allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
+                                     is_whitelist: bool,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -135,7 +136,9 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
 
-    check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
+    if !is_whitelist {
+        check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
+    }
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
 
@@ -310,6 +313,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         full_discount_in_usd: full_discount_amount_in_usd,
         half_discount_in_usd: half_discount_amount_in_usd,
         quantity,
+        is_whitelist,
     };
 
     emit!(event);

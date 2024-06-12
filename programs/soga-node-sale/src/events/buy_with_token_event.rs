@@ -57,4 +57,6 @@ pub struct BuyWithTokenEvent {
     pub payment_token_half_discount_receiver_token_account: Pubkey,
 
     pub quantity: u64,
+
+    pub is_whitelist: bool,
 }
