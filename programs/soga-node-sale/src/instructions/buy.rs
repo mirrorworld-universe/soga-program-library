@@ -21,7 +21,7 @@ use crate::events::{
     BuyEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -109,8 +109,8 @@ pub struct BuyInputAccounts<'info> {
 pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAccounts<'info>>,
                                      _sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
                                      sale_phase_name: String, tier_id: String, order_id: String, quantity: u64,
-                                     allow_full_discount: bool, full_discount: u64, allow_half_discount: bool, half_discount: u64,
-                                     is_whitelist: bool,
+                                     allow_full_discount: bool, full_discount: u16, allow_half_discount: bool, half_discount: u16,
+                                     is_whitelist: bool, allow_user_discount: bool, user_discount: u16,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -174,12 +174,32 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     let pyth_price: u64 = u64::try_from(price.price).unwrap();
     let price_in_lamport: u64 = LAMPORTS_PER_SOL.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd).unwrap();
 
+    let mut user_discount_in_usd: u64 = 0;
+    let mut user_discount_in_lamport: u64 = 0;
+
+    let mut after_user_discount_in_usd: u64 = price_in_usd;
+    let mut after_user_discount_in_lamport: u64 = price_in_lamport;
+
     let mut full_discount_amount_in_lamport: u64 = 0;
     let mut full_discount_amount_in_usd: u64 = 0;
 
+    if allow_user_discount {
+        check_value_is_zero(user_discount as usize)?;
+
+        check_invalid_user_discount(user_discount)?;
+
+        user_discount_in_lamport = (user_discount as u64 * price_in_lamport) / 10000;
+        user_discount_in_usd = (user_discount as u64 * price_in_usd) / 10000;
+
+        after_user_discount_in_usd = price_in_usd - user_discount_in_usd;
+        after_user_discount_in_lamport = price_in_lamport - user_discount_in_lamport;
+    }
+
     if allow_full_discount {
-        full_discount_amount_in_lamport = (full_discount * price_in_lamport) / 100;
-        full_discount_amount_in_usd = (full_discount * price_in_usd) / 100;
+        check_value_is_zero(full_discount as usize)?;
+
+        full_discount_amount_in_lamport = (full_discount as u64 * after_user_discount_in_lamport) / 10000;
+        full_discount_amount_in_usd = (full_discount as u64 * after_user_discount_in_usd) / 10000;
 
         let deposit_full_discount_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.user_payer.key(),
@@ -200,8 +220,10 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     let mut half_discount_amount_in_usd: u64 = 0;
 
     if allow_half_discount {
-        half_discount_amount_in_lamport = (half_discount * price_in_lamport) / 100;
-        half_discount_amount_in_usd = (half_discount * price_in_usd) / 100;
+        check_value_is_zero(half_discount as usize)?;
+
+        half_discount_amount_in_lamport = (half_discount as u64 * after_user_discount_in_lamport) / 10000;
+        half_discount_amount_in_usd = (half_discount as u64 * after_user_discount_in_usd) / 10000;
 
         let deposit_half_discount_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
             &ctx.accounts.user_payer.key(),
@@ -221,7 +243,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     let deposit_amount_ix = anchor_lang::solana_program::system_instruction::transfer(
         &ctx.accounts.user_payer.key(),
         &payment_receiver.key(),
-        price_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
+        after_user_discount_in_lamport.sub(full_discount_amount_in_lamport).sub(half_discount_amount_in_lamport),
     );
 
     anchor_lang::solana_program::program::invoke(
@@ -240,8 +262,10 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     order_detail.is_completed = false;
     order_detail.quantity = quantity;
     order_detail.total_payment_in_usd = price_in_usd;
+    order_detail.total_user_discount = after_user_discount_in_usd;
     order_detail.total_discount_in_usd = full_discount_amount_in_usd.add(half_discount_amount_in_usd);
     order_detail.total_payment = price_in_lamport;
+    order_detail.total_user_discount = after_user_discount_in_lamport;
     order_detail.total_discount = full_discount_amount_in_lamport.add(half_discount_amount_in_lamport);
     order_detail.payment_token_mint_account = None;
     order_detail.token_ids = Vec::with_capacity(quantity as usize);
@@ -309,15 +333,19 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
         total_price_in_lamport: price_in_lamport,
         full_discount_in_lamport: full_discount_amount_in_lamport,
         half_discount_in_lamport: half_discount_amount_in_lamport,
+        user_discount_in_lamport,
         pyth_expo,
         pyth_price,
         allow_full_discount,
         full_discount,
         allow_half_discount,
         half_discount,
+        allow_user_discount,
+        user_discount,
         total_price_in_usd: price_in_usd,
         full_discount_in_usd: full_discount_amount_in_usd,
         half_discount_in_usd: half_discount_amount_in_usd,
+        user_discount_in_usd,
         quantity,
         is_whitelist,
     };

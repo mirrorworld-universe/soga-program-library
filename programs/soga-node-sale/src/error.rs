@@ -62,6 +62,9 @@ pub enum SogaNodeSaleError {
     #[msg("Invalid discount")]
     InvalidDiscount,
 
+    #[msg("Invalid user discount")]
+    InvalidUserDiscount,
+
     #[msg("Invalid payment token mint account")]
     InvalidPaymentTokenMintAccount,
 

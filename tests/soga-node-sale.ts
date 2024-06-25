@@ -152,11 +152,15 @@ interface BuyEvent {
 
     halfDiscountInLamport: BN,
 
+    userDiscountInLamport: BN,
+
     totalPriceInUsd: BN,
 
     fullDiscountInUsd: BN,
 
     halfDiscountInUsd: BN,
+
+    userDiscountInUsd: BN,
 
     quantity: BN,
 
@@ -168,11 +172,15 @@ interface BuyEvent {
 
     allowFullDiscount: boolean,
 
-    fullDiscount: BN,
+    fullDiscount: number,
 
     allowHalfDiscount: boolean,
 
-    halfDiscount: BN
+    halfDiscount: number,
+
+    allowUserDiscount: boolean,
+
+    userDiscount: number
 }
 
 interface BuyWithTokenEvent {
@@ -202,11 +210,15 @@ interface BuyWithTokenEvent {
 
     halfDiscountInLamport: BN,
 
+    userDiscountInLamport: BN,
+
     totalPriceInUsd: BN,
 
     fullDiscountInUsd: BN,
 
     halfDiscountInUsd: BN,
+
+    userDiscountInUsd: BN,
 
     quantity: BN,
 
@@ -218,11 +230,15 @@ interface BuyWithTokenEvent {
 
     allowFullDiscount: boolean,
 
-    fullDiscount: BN,
+    fullDiscount: number,
 
     allowHalfDiscount: boolean,
 
-    halfDiscount: BN,
+    halfDiscount: number,
+
+    allowUserDiscount: boolean,
+
+    userDiscount: number,
 
     paymentTokenUserPayerTokenAccount: PublicKey,
 
@@ -831,9 +847,8 @@ describe("soga_node_sale", () => {
 
         const [orderPda] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
 
-
         const tx = await program.methods.buy(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
-            phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, new BN(20), true, new BN(10), false)
+            phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, 2000, true, 1000, false, false, 0)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -900,7 +915,7 @@ describe("soga_node_sale", () => {
 
 
         const tx = await program.methods.buy(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
-            phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, new BN(20), true, new BN(10), true)
+            phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, 2000, true, 1000, true, true, 1000)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -996,7 +1011,7 @@ describe("soga_node_sale", () => {
         );
 
         const tx = await program.methods.buyWithToken(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
-            phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, new BN(20), true, new BN(10), true)
+            phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, 2000, true, 1000, true, true, 1000)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -1136,7 +1151,7 @@ describe("soga_node_sale", () => {
         );
 
         const tx = await program.methods.buyWithToken(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
-            phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, new BN(20), true, new BN(10), false)
+            phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, 2000, true, 1000, false, false, 0)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,

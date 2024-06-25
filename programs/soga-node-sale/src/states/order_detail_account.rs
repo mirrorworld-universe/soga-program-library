@@ -21,9 +21,13 @@ pub struct OrderDetailAccount {
 
     pub total_discount_in_usd: u64,
 
+    pub total_user_discount_in_usd: u64,
+
     pub total_payment: u64,
 
     pub total_discount: u64,
+
+    pub total_user_discount: u64,
 
     pub payment_token_mint_account: Option<Pubkey>,
 }
@@ -39,8 +43,10 @@ impl OrderDetailAccount {
             + 8 // quantity
             + 8 // total_payment_in_usd
             + 8 // total_discount_in_usd
+            + 8 // total_user_discount_in_usd
             + 8 // total_payment
             + 8 // total_discount
-            + 32 // payment_token_mint_account
+            + 8 // total_user_discount
+            + 33 // payment_token_mint_account
     }
 }

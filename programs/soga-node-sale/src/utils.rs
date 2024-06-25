@@ -170,12 +170,21 @@ pub fn check_value_is_zero(value: usize) -> Result<()> {
     Ok(())
 }
 
-pub fn check_invalid_discount(full_value: u64, half_value: u64) -> Result<()> {
+pub fn check_invalid_discount(full_value: u16, half_value: u16) -> Result<()> {
 
-    let value: u64 = full_value + half_value;
+    let value: u16 = full_value + half_value;
 
-    if value >= 100  {
+    if value >= 10000  {
         return Err(SogaNodeSaleError::InvalidDiscount.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_invalid_user_discount(value: u16) -> Result<()> {
+
+    if value >= 10000  {
+        return Err(SogaNodeSaleError::InvalidUserDiscount.into());
     }
 
     Ok(())
