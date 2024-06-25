@@ -11,6 +11,8 @@ pub struct SogaNodeSalePhasePaymentTokenDetailAccount {
 
     pub price_feed_address: Pubkey,
 
+    pub price_feed_id: String,
+
     pub enable: bool,
 
     pub decimals: u8,
@@ -22,6 +24,7 @@ impl SogaNodeSalePhasePaymentTokenDetailAccount {
             + 8 // last_block_timestamp
             + 32 // mint
             + 32 // price_feed_address
+            + 70 // price_feed_id
             + 1 // enable
             + 1 // enable
     }

@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::states::{
     SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX,
@@ -19,8 +20,7 @@ pub struct UpdateSalePhaseInputAccounts<'info> {
 
     pub signing_authority: Signer<'info>,
 
-    /// CHECK: pyth price feed
-    pub price_feed: AccountInfo<'info>,
+    pub price_feed: Account<'info, PriceUpdateV2>,
 
     /// CHECK: payment receiver
     pub payment_receiver: AccountInfo<'info>,
@@ -44,6 +44,7 @@ pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
                                 _sale_phase_detail_bump: u8, sale_phase_name: String,
                                 name: String, symbol: String, metadata_base_uri: String,
                                 buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
+                                price_feed_id: String
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -53,6 +54,7 @@ pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
 
     sale_phase_detail.last_block_timestamp = timestamp;
     sale_phase_detail.price_feed_address = ctx.accounts.price_feed.key();
+    sale_phase_detail.price_feed_id = price_feed_id.clone();
     sale_phase_detail.payment_receiver = ctx.accounts.payment_receiver.key();
 
     sale_phase_detail.buy_enable = buy_enable;
@@ -66,6 +68,7 @@ pub fn handle_update_sale_phase(ctx: Context<UpdateSalePhaseInputAccounts>,
         timestamp,
         sale_phase_name,
         price_feed: ctx.accounts.price_feed.key(),
+        price_feed_id,
         payment_receiver: ctx.accounts.payment_receiver.key(),
         buy_enable,
         buy_with_token_enable,

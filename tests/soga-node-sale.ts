@@ -35,6 +35,8 @@ interface InitializeSalePhaseEvent {
 
     priceFeed: PublicKey,
 
+    priceFeedId: string,
+
     paymentReceiver: PublicKey
 }
 
@@ -61,6 +63,8 @@ interface UpdateSalePhaseEvent {
     salePhaseName: string,
 
     priceFeed: PublicKey,
+
+    priceFeedId: string,
 
     paymentReceiver: PublicKey,
 
@@ -236,6 +240,8 @@ interface InitializeSalePhasePaymentTokenEvent {
 
     priceFeed: PublicKey,
 
+    priceFeedId: string,
+
     mint: PublicKey,
 }
 
@@ -245,6 +251,8 @@ interface UpdateSalePhasePaymentTokenEvent {
     salePhaseName: string,
 
     priceFeed: PublicKey,
+
+    priceFeedId: string,
 
     enable: boolean,
 }
@@ -313,9 +321,22 @@ const priceReceiverKeypair: Keypair = Keypair.generate();
 const fullReceiverKeypair: Keypair = Keypair.generate();
 const halfReceiverKeypair: Keypair = Keypair.generate();
 
-const priceFeedSolAddress: PublicKey = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
-const priceFeedUsdtAddress: PublicKey = new PublicKey("38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto");
-const priceFeedUsdcAddress: PublicKey = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7");
+// Old feed
+// const priceFeedSolAddress: PublicKey = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix");
+// const priceFeedUsdtAddress: PublicKey = new PublicKey("38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto");
+// const priceFeedUsdcAddress: PublicKey = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7");
+
+const priceFeedSolAddress: PublicKey = new PublicKey("7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE");
+const priceFeedIdSol: string = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+
+const priceFeedUsdtAddress: PublicKey = new PublicKey("HT2PLQBcG5EiCcNSaMHAjSgd9F98ecpATbk4Sk5oYuM");
+const priceFeedIdUsdt: string = "2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b";
+
+const priceFeedUsdcAddress: PublicKey = new PublicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX");
+const priceFeedIdUsdc: string = "eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
+
+const pythReceiver: PublicKey = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
+const pythPriceFeed: PublicKey = new PublicKey("pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT");
 
 let paymentTokenMintAccount: PublicKey;
 
@@ -484,7 +505,7 @@ describe("soga_node_sale", () => {
 
     it("Initialize Sale Phase One", async () => {
 
-        const tx = await program.methods.initializeSalePhase(sogaNodeSaleConfigBump, phaseOne, 5, nft_name, nft_symbol, nft_url)
+        const tx = await program.methods.initializeSalePhase(sogaNodeSaleConfigBump, phaseOne, 5, nft_name, nft_symbol, nft_url, priceFeedIdSol)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 mainSigningAuthority: mainSigningAuthorityPubKey,
@@ -530,7 +551,7 @@ describe("soga_node_sale", () => {
 
     it("Update Sale Phase One", async () => {
 
-        const tx = await program.methods.updateSalePhase(sogaNodeSalePhaseOneBump, phaseOne, nft_name, nft_symbol, nft_url, true, true, true)
+        const tx = await program.methods.updateSalePhase(sogaNodeSalePhaseOneBump, phaseOne, nft_name, nft_symbol, nft_url, true, true, true, priceFeedIdSol)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -578,7 +599,7 @@ describe("soga_node_sale", () => {
             phaseOne, sogaNodeSalePhaseOnePDA, paymentTokenMintAccount);
 
 
-        const tx = await program.methods.initializeSalePhaseTokenPayment(sogaNodeSalePhaseOneBump, phaseOne)
+        const tx = await program.methods.initializeSalePhaseTokenPayment(sogaNodeSalePhaseOneBump, phaseOne, priceFeedIdUsdt)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -591,7 +612,7 @@ describe("soga_node_sale", () => {
                 rent: SYSVAR_RENT_PUBKEY
             })
             .signers([signingAuthorityKeypair])
-            .rpc();
+            .rpc({skipPreflight: true});
         console.log("Your transaction signature", tx);
 
         await delay(delayTimeCount);
@@ -602,7 +623,7 @@ describe("soga_node_sale", () => {
         const [salePhasePaymentTokenDetailPda, salePhasePaymentTokenDetailBump] = getSogaNodeSalePhasePaymentTokenDetailAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_ACCOUNT_PREFIX,
             phaseOne, sogaNodeSalePhaseOnePDA, paymentTokenMintAccount);
 
-        const tx = await program.methods.updateSalePhaseTokenPayment(sogaNodeSalePhaseOneBump, salePhasePaymentTokenDetailBump, phaseOne, true)
+        const tx = await program.methods.updateSalePhaseTokenPayment(sogaNodeSalePhaseOneBump, salePhasePaymentTokenDetailBump, phaseOne, true, priceFeedIdUsdt)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -823,14 +844,10 @@ describe("soga_node_sale", () => {
                 userDetail: userDetailPda,
                 userTierDetail: userPhaseTierDetailPda,
                 orderDetail: orderPda,
+                priceUpdate: priceFeedSolAddress,
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             }).remainingAccounts([
-                {
-                    pubkey: priceFeedSolAddress,
-                    isWritable: false,
-                    isSigner: false
-                },
                 {
                     pubkey: priceReceiverKeypair.publicKey,
                     isWritable: true,
@@ -894,14 +911,10 @@ describe("soga_node_sale", () => {
                 userDetail: userDetailPda,
                 userTierDetail: userPhaseTierDetailPda,
                 orderDetail: orderPda,
+                priceUpdate: priceFeedSolAddress,
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             }).remainingAccounts([
-                {
-                    pubkey: priceFeedSolAddress,
-                    isWritable: false,
-                    isSigner: false
-                },
                 {
                     pubkey: priceReceiverKeypair.publicKey,
                     isWritable: true,
@@ -994,14 +1007,10 @@ describe("soga_node_sale", () => {
                 userDetail: userDetailPda,
                 userTierDetail: userPhaseTierDetailPda,
                 orderDetail: orderPda,
+                priceUpdate: priceFeedUsdtAddress,
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             }).remainingAccounts([
-                {
-                    pubkey: priceFeedUsdtAddress, // 0
-                    isWritable: true,
-                    isSigner: false
-                },
                 {
                     pubkey: priceReceiverKeypair.publicKey, // 1
                     isWritable: true,
@@ -1061,8 +1070,8 @@ describe("soga_node_sale", () => {
             .signers([signingAuthorityKeypair, userBKeypair])
             .rpc({});
 
-        // console.log("Your transaction signature", tx);
-        //
+        console.log("Your transaction signature", tx);
+
         await delay(delayTimeCount);
 
         console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
@@ -1138,14 +1147,10 @@ describe("soga_node_sale", () => {
                 userDetail: userDetailPda,
                 userTierDetail: userPhaseTierDetailPda,
                 orderDetail: orderPda,
+                priceUpdate: priceFeedUsdtAddress,
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             }).remainingAccounts([
-                {
-                    pubkey: priceFeedUsdtAddress, // 0
-                    isWritable: true,
-                    isSigner: false
-                },
                 {
                     pubkey: priceReceiverKeypair.publicKey, // 1
                     isWritable: true,
@@ -1205,8 +1210,8 @@ describe("soga_node_sale", () => {
             .signers([signingAuthorityKeypair, userBKeypair])
             .rpc({});
 
-        // console.log("Your transaction signature", tx);
-        //
+        console.log("Your transaction signature", tx);
+
         await delay(delayTimeCount);
 
         console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));

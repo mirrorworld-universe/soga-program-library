@@ -18,13 +18,21 @@ wallet = "/Users/bilalafzal/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [test]
-startup_wait = 5000
-shutdown_wait = 2000
+startup_wait = 10000
+shutdown_wait = 5000
 upgradeable = false
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 program = "./dep/metadata.so"
+
+[[test.genesis]]
+address = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"
+program = "./dep/pyth_receiver.so"
+
+[[test.genesis]]
+address = "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT"
+program = "./dep/pyth_price_feed.so"
 
 [test.validator]
 bind_address = "0.0.0.0"
@@ -32,11 +40,14 @@ url = "https://api.devnet.solana.com"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899
 
+# SOL/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
-address = "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"
+address = "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE"
 
+# USDT/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
-address = "5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7"
+address = "HT2PLQBcG5EiCcNSaMHAjSgd9F98ecpATbk4Sk5oYuM"
 
+# USDC/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
-address = "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto"
+address = "Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"

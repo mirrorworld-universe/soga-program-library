@@ -13,4 +13,6 @@ pub struct InitializeSalePhaseEvent {
     pub price_feed: Pubkey,
 
     pub payment_receiver: Pubkey,
+
+    pub price_feed_id: String,
 }

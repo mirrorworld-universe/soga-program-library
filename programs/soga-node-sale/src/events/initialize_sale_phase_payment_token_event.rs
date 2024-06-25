@@ -8,5 +8,7 @@ pub struct InitializeSalePhasePaymentTokenEvent {
 
     pub price_feed: Pubkey,
 
+    pub price_feed_id: String,
+
     pub mint: Pubkey,
 }

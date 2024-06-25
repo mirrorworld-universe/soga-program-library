@@ -8,5 +8,7 @@ pub struct UpdateSalePhasePaymentTokenEvent {
 
     pub price_feed: Pubkey,
 
+    pub price_feed_id: String,
+
     pub enable: bool,
 }

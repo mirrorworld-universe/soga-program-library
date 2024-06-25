@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     token_interface::{Mint, TokenInterface},
 };
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::states::{
     SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX,
@@ -27,8 +28,7 @@ pub struct UpdateSalePhasePaymentTokenInputAccounts<'info> {
 
     pub signing_authority: Signer<'info>,
 
-    /// CHECK: pyth price feed
-    pub price_feed: AccountInfo<'info>,
+    pub price_feed: Account<'info, PriceUpdateV2>,
 
     #[account(
     seeds = [
@@ -65,6 +65,7 @@ pub struct UpdateSalePhasePaymentTokenInputAccounts<'info> {
 pub fn handle_update_sale_phase_token_payment(ctx: Context<UpdateSalePhasePaymentTokenInputAccounts>,
                                               _sale_phase_detail_bump: u8, _sale_phase_payment_token_detail_bump: u8,
                                               sale_phase_name: String, enable: bool,
+                                              price_feed_id: String,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -76,12 +77,14 @@ pub fn handle_update_sale_phase_token_payment(ctx: Context<UpdateSalePhasePaymen
     let sale_phase_payment_token_detail: &mut Box<Account<SogaNodeSalePhasePaymentTokenDetailAccount>> = &mut ctx.accounts.sale_phase_payment_token_detail;
     sale_phase_payment_token_detail.last_block_timestamp = timestamp;
     sale_phase_payment_token_detail.price_feed_address = ctx.accounts.price_feed.key();
+    sale_phase_payment_token_detail.price_feed_id = price_feed_id.clone();
     sale_phase_payment_token_detail.enable = enable;
 
     let event: UpdateSalePhasePaymentTokenEvent = UpdateSalePhasePaymentTokenEvent {
         timestamp,
         sale_phase_name,
         price_feed: ctx.accounts.price_feed.key(),
+        price_feed_id,
         enable,
     };
 

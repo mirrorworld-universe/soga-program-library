@@ -2,7 +2,7 @@ use std::ops::{Add, Mul, Sub};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
-use pyth_sdk_solana::{Price, PriceFeed, state::SolanaPriceAccount};
+use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2, Price, get_feed_id_from_hex};
 
 use anchor_spl::{
     token_interface::{TransferChecked, transfer_checked},
@@ -104,6 +104,8 @@ pub struct BuyWithTokenInputAccounts<'info> {
     )]
     pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
+    pub price_update: Account<'info, PriceUpdateV2>,
+
     pub system_program: Program<'info, System>,
 
     pub rent: Sysvar<'info, Rent>,
@@ -122,19 +124,18 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> = &ctx.accounts.sale_phase_detail;
     let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> = &ctx.accounts.sale_phase_tier_detail;
 
-    let price_feed_info = &ctx.remaining_accounts[0];
-    let payment_receiver = &ctx.remaining_accounts[1];
-    let full_discount_receiver = &ctx.remaining_accounts[2];
-    let half_discount_receiver = &ctx.remaining_accounts[3];
+    let payment_receiver = &ctx.remaining_accounts[0];
+    let full_discount_receiver = &ctx.remaining_accounts[1];
+    let half_discount_receiver = &ctx.remaining_accounts[2];
 
-    let sale_phase_payment_token_detail_info = &ctx.remaining_accounts[4];
-    let payment_token_mint_account = &ctx.remaining_accounts[5];
-    let payment_token_program = &ctx.remaining_accounts[6];
+    let sale_phase_payment_token_detail_info = &ctx.remaining_accounts[3];
+    let payment_token_mint_account = &ctx.remaining_accounts[4];
+    let payment_token_program = &ctx.remaining_accounts[5];
 
-    let payment_token_user_payer_token_account = &ctx.remaining_accounts[7];
-    let payment_token_payment_receiver_token_account = &ctx.remaining_accounts[8];
-    let payment_token_full_discount_receiver_token_account = &ctx.remaining_accounts[9];
-    let payment_token_half_discount_receiver_token_account = &ctx.remaining_accounts[10];
+    let payment_token_user_payer_token_account = &ctx.remaining_accounts[6];
+    let payment_token_payment_receiver_token_account = &ctx.remaining_accounts[7];
+    let payment_token_full_discount_receiver_token_account = &ctx.remaining_accounts[8];
+    let payment_token_half_discount_receiver_token_account = &ctx.remaining_accounts[9];
 
     let sale_phase_payment_token_detail = SogaNodeSalePhasePaymentTokenDetailAccount::try_deserialize(&mut &**sale_phase_payment_token_detail_info.try_borrow_mut_data()?).unwrap();
 
@@ -151,7 +152,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
 
-    check_price_feed(sale_phase_payment_token_detail.price_feed_address, price_feed_info.key())?;
+    check_price_feed(sale_phase_payment_token_detail.price_feed_address, ctx.accounts.price_update.key())?;
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
 
@@ -178,12 +179,17 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     // Make Payment
     let price_in_usd: u64 = sale_phase_tier_detail.price.mul(quantity);
 
-    let price_feed: PriceFeed = SolanaPriceAccount::account_info_to_feed(&price_feed_info).unwrap();
+    let price_update = &mut ctx.accounts.price_update;
 
-    let emo_price: Price = price_feed.get_ema_price_no_older_than(timestamp, 60).unwrap();
+    let feed_id: [u8; 32] = get_feed_id_from_hex(sale_phase_payment_token_detail.price_feed_id.as_str())?;
 
-    let pyth_expo: u64 = 10_u64.pow(u32::try_from(-emo_price.expo).unwrap());
-    let pyth_price: u64 = u64::try_from(emo_price.price).unwrap();
+    let price: Price = price_update.get_price_no_older_than(&Clock::get()?,
+                                                            120,
+                                                            &feed_id,
+    )?;
+
+    let pyth_expo: u64 = 10_u64.pow(price.exponent.abs().try_into().unwrap());
+    let pyth_price: u64 = u64::try_from(price.price).unwrap();
     let price_in_lamport: u64 = LAMPORTS_PER_SOL.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd).unwrap();
 
     let mut full_discount_amount_in_lamport: u64 = 0;
@@ -304,7 +310,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
         order_id,
         user: ctx.accounts.user.key(),
         user_payer: ctx.accounts.user_payer.key(),
-        price_feed: price_feed_info.key(),
+        price_feed: ctx.accounts.price_update.key(),
         payment_receiver: payment_receiver.key(),
         full_discount_receiver: full_discount_receiver.key(),
         half_discount_receiver: half_discount_receiver.key(),

@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use anchor_spl::{
     token_interface::{Mint, TokenInterface},
 };
@@ -28,33 +28,32 @@ pub struct InitializeSalePhasePaymentTokenInputAccounts<'info> {
 
     pub signing_authority: Signer<'info>,
 
-    /// CHECK: pyth price feed
-    pub price_feed: AccountInfo<'info>,
+    pub price_feed: Account<'info, PriceUpdateV2>,
 
     #[account(
-    seeds = [
-    SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    ],
-    bump = _sale_phase_detail_bump,
+        seeds = [
+        SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_name.as_ref(),
+        ],
+        bump = _sale_phase_detail_bump,
     )]
     pub sale_phase_detail: Box<Account<'info, SogaNodeSalePhaseDetailAccount>>,
 
     #[account(
-    init,
-    payer = payer,
-    space = SogaNodeSalePhasePaymentTokenDetailAccount::space(),
-    seeds = [
-    SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    payment_token_mint_account.key().as_ref()
-    ],
-    bump,
+        init,
+        payer = payer,
+        space = SogaNodeSalePhasePaymentTokenDetailAccount::space(),
+        seeds = [
+        SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_detail.key().as_ref(),
+        payment_token_mint_account.key().as_ref()
+        ],
+        bump,
     )]
     pub sale_phase_payment_token_detail: Box<Account<'info, SogaNodeSalePhasePaymentTokenDetailAccount>>,
 
     #[account(
-    mint::token_program = payment_token_program,
+        mint::token_program = payment_token_program,
     )]
     pub payment_token_mint_account: Box<InterfaceAccount<'info, Mint>>,
 
@@ -67,6 +66,7 @@ pub struct InitializeSalePhasePaymentTokenInputAccounts<'info> {
 
 pub fn handle_initialize_sale_phase_token_payment(ctx: Context<InitializeSalePhasePaymentTokenInputAccounts>,
                                                   _sale_phase_detail_bump: u8, sale_phase_name: String,
+                                                  price_feed_id: String,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -78,6 +78,7 @@ pub fn handle_initialize_sale_phase_token_payment(ctx: Context<InitializeSalePha
     let sale_phase_payment_token_detail: &mut Box<Account<SogaNodeSalePhasePaymentTokenDetailAccount>> = &mut ctx.accounts.sale_phase_payment_token_detail;
     sale_phase_payment_token_detail.last_block_timestamp = timestamp;
     sale_phase_payment_token_detail.price_feed_address = ctx.accounts.price_feed.key();
+    sale_phase_payment_token_detail.price_feed_id = price_feed_id.clone();
     sale_phase_payment_token_detail.mint = ctx.accounts.payment_token_mint_account.key();
     sale_phase_payment_token_detail.decimals = ctx.accounts.payment_token_mint_account.decimals;
     sale_phase_payment_token_detail.enable = true;
@@ -86,6 +87,7 @@ pub fn handle_initialize_sale_phase_token_payment(ctx: Context<InitializeSalePha
         timestamp,
         sale_phase_name,
         price_feed: ctx.accounts.price_feed.key(),
+        price_feed_id,
         mint: ctx.accounts.payment_token_mint_account.key(),
     };
 

@@ -22,8 +22,9 @@ pub mod soga_node_sale {
     pub fn initialize_sale_phase(ctx: Context<InitializeSalePhaseInputAccounts>,
                                  _sale_config_bump: u8, sale_phase_name: String,
                                  total_tiers: u32, name: String, symbol: String, metadata_base_uri: String,
+                                 price_feed_id: String,
     ) -> Result<()> {
-        handle_initialize_sale_phase(ctx, _sale_config_bump, sale_phase_name, total_tiers, name, symbol, metadata_base_uri)
+        handle_initialize_sale_phase(ctx, _sale_config_bump, sale_phase_name, total_tiers, name, symbol, metadata_base_uri, price_feed_id)
     }
 
     pub fn initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInputAccounts>,
@@ -43,7 +44,7 @@ pub mod soga_node_sale {
     ) -> Result<()> {
         handle_buy(ctx, _sale_phase_detail_bump, _sale_phase_tier_detail_bump,
                    sale_phase_name, tier_id, order_id, quantity, allow_full_discount, full_discount, allow_half_discount, half_discount,
-        is_whitelist)
+                   is_whitelist)
     }
 
     pub fn airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, AirdropInputAccounts<'info>>,
@@ -58,9 +59,10 @@ pub mod soga_node_sale {
                              _sale_phase_detail_bump: u8, sale_phase_name: String,
                              name: String, symbol: String, metadata_base_uri: String,
                              buy_enable: bool, buy_with_token_enable: bool, airdrop_enable: bool,
+                             price_feed_id: String,
     ) -> Result<()> {
         handle_update_sale_phase(ctx, _sale_phase_detail_bump, sale_phase_name, name, symbol, metadata_base_uri,
-                                 buy_enable, buy_with_token_enable, airdrop_enable)
+                                 buy_enable, buy_with_token_enable, airdrop_enable, price_feed_id)
     }
 
     pub fn update_sale_phase_tier(ctx: Context<UpdateSalePhaseTierInputAccounts>,
@@ -74,16 +76,17 @@ pub mod soga_node_sale {
 
     pub fn initialize_sale_phase_token_payment(ctx: Context<InitializeSalePhasePaymentTokenInputAccounts>,
                                                _sale_phase_detail_bump: u8, sale_phase_name: String,
+                                               price_feed_id: String,
     ) -> Result<()> {
-        handle_initialize_sale_phase_token_payment(ctx, _sale_phase_detail_bump, sale_phase_name)
+        handle_initialize_sale_phase_token_payment(ctx, _sale_phase_detail_bump, sale_phase_name, price_feed_id)
     }
 
     pub fn update_sale_phase_token_payment(ctx: Context<UpdateSalePhasePaymentTokenInputAccounts>,
                                            _sale_phase_detail_bump: u8, _sale_phase_payment_token_detail_bump: u8,
-                                           sale_phase_name: String, enable: bool,
+                                           sale_phase_name: String, enable: bool, price_feed_id: String,
     ) -> Result<()> {
         handle_update_sale_phase_token_payment(ctx, _sale_phase_detail_bump, _sale_phase_payment_token_detail_bump, sale_phase_name,
-                                               enable)
+                                               enable, price_feed_id)
     }
 
     pub fn buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyWithTokenInputAccounts<'info>>,

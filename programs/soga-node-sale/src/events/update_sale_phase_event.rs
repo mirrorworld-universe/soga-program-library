@@ -8,6 +8,8 @@ pub struct UpdateSalePhaseEvent {
 
     pub price_feed: Pubkey,
 
+    pub price_feed_id: String,
+
     pub payment_receiver: Pubkey,
 
     pub buy_enable: bool,
