@@ -82,6 +82,22 @@ pub fn check_quantity(mint_limit: u64, quantity: u64) -> Result<()> {
     Ok(())
 }
 
+pub fn check_whitelist_quantity(whitelist_quantity: u64, quantity: u64) -> Result<()> {
+    if  whitelist_quantity > quantity {
+        return Err(SogaNodeSaleError::InvalidQuantity.into());
+    }
+
+    Ok(())
+}
+
+pub fn check_token_whitelist_quantity_out_of_range(total_whitelist_minted: u64, quantity: u64) -> Result<()> {
+    if total_whitelist_minted > quantity {
+        return Err(SogaNodeSaleError::TokenWhitelistQuantityOutOfRange.into());
+    }
+
+    Ok(())
+}
+
 pub fn check_token_quantity_out_of_range(total_minted: u64, quantity: u64) -> Result<()> {
     if total_minted > quantity {
         return Err(SogaNodeSaleError::TokenQuantityOutOfRange.into());

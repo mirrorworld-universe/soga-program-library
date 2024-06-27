@@ -18,6 +18,8 @@ pub struct UserTierDetailAccount {
     pub total_payment: u64,
 
     pub total_discount: u64,
+
+    pub total_whitelist_mint: u64,
 }
 
 impl UserTierDetailAccount {

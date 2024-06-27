@@ -31,9 +31,10 @@ pub mod soga_node_sale {
                                       _sale_phase_detail_bump: u8, sale_phase_name: String,
                                       tier_id: String, price: u64, quantity: u64, mint_limit: u64,
                                       collection_name: String, collection_symbol: String, collection_url: String,
+                                      whitelist_quantity: u64,
     ) -> Result<()> {
         handle_initialize_sale_phase_tier(ctx, _sale_phase_detail_bump, sale_phase_name, tier_id, price, quantity, mint_limit,
-                                          collection_name, collection_symbol, collection_url)
+                                          collection_name, collection_symbol, collection_url, whitelist_quantity)
     }
 
     pub fn buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAccounts<'info>>,

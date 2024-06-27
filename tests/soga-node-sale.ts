@@ -55,6 +55,8 @@ interface InitializeSalePhaseTierEvent {
     quantity: BN,
 
     mintLimit: BN,
+
+    whitelistQuantity: BN,
 }
 
 interface UpdateSalePhaseEvent {
@@ -681,7 +683,7 @@ describe("soga_node_sale", () => {
 
         const tx = await program.methods.initializeSalePhaseTier(sogaNodeSalePhaseOneBump, phaseOne, tierId.toString(),
             new BN(100), new BN(10), new BN(5),
-            collection_name, collection_symbol, collection_url)
+            collection_name, collection_symbol, collection_url, new BN(5))
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -789,7 +791,7 @@ describe("soga_node_sale", () => {
 
         const tx = await program.methods.initializeSalePhaseTier(sogaNodeSalePhaseOneBump, phaseOne, tierId.toString(),
             new BN(200), new BN(10), new BN(5),
-            collection_name, collection_symbol, collection_url)
+            collection_name, collection_symbol, collection_url, new BN(4))
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -826,6 +828,7 @@ describe("soga_node_sale", () => {
         assert(salePhaseTierData.price.toString() === (new BN(200)).toString());
         assert(salePhaseTierData.quantity.toString() === (new BN(10)).toString());
         assert(salePhaseTierData.mintLimit.toString() === (new BN(5)).toString());
+        assert(salePhaseTierData.whitelistQuantity.toString() === (new BN(4)).toString());
     });
 
     it("Buy Node One Sale Phase One Tier One", async () => {
@@ -1011,7 +1014,7 @@ describe("soga_node_sale", () => {
         );
 
         const tx = await program.methods.buyWithToken(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
-            phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, 2000, true, 1000, true, true, 1000)
+            phaseOne, tierId.toString(), orderId.toString(), new BN(1), true, 2000, true, 1000, true, true, 1000)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,

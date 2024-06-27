@@ -13,11 +13,13 @@ pub struct SogaNodeSalePhaseTierDetailAccount {
 
     pub quantity: u64,
 
+
     pub mint_limit: u64,
 
     pub is_completed: bool,
 
     pub total_mint: u64,
+
 
     pub total_buy: u64,
 
@@ -34,6 +36,10 @@ pub struct SogaNodeSalePhaseTierDetailAccount {
     pub buy_with_token_enable: bool,
 
     pub airdrop_enable: bool,
+
+    pub whitelist_quantity: u64,
+
+    pub total_whitelist_mint: u64,
 }
 
 impl SogaNodeSalePhaseTierDetailAccount {
@@ -54,5 +60,7 @@ impl SogaNodeSalePhaseTierDetailAccount {
             + 1 // buy_enable
             + 1 // buy_with_token_enable
             + 1 // airdrop_enable
+            + 8 // whitelist_quantity
+            + 8 // total_whitelist_mint
     }
 }

@@ -30,6 +30,8 @@ pub struct OrderDetailAccount {
     pub total_user_discount: u64,
 
     pub payment_token_mint_account: Option<Pubkey>,
+
+    pub is_whitelist: bool,
 }
 
 impl OrderDetailAccount {

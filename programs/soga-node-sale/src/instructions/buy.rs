@@ -21,7 +21,7 @@ use crate::events::{
     BuyEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -137,7 +137,9 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
 
-    if !is_whitelist {
+    if is_whitelist {
+        check_token_whitelist_quantity_out_of_range(sale_phase_tier_detail.total_whitelist_mint + quantity, sale_phase_tier_detail.whitelist_quantity)?;
+    } else {
         check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
     }
 
@@ -270,6 +272,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     order_detail.payment_token_mint_account = None;
     order_detail.token_ids = Vec::with_capacity(quantity as usize);
     order_detail.is_token_ids_minted = Vec::with_capacity(quantity as usize);
+    order_detail.is_whitelist = is_whitelist;
 
     let mut current_token_id: u64 = sale_phase_tier_detail.total_mint;
 
@@ -317,6 +320,13 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     user_tier_detail.total_discount += full_discount_amount_in_usd;
     user_tier_detail.total_discount += half_discount_amount_in_usd;
     user_tier_detail.last_block_timestamp = timestamp;
+
+    if is_whitelist {
+        sale_phase_detail.total_whitelist_mint += quantity;
+        sale_phase_tier_detail.total_whitelist_mint += quantity;
+        user_detail.total_whitelist_mint += quantity;
+        user_tier_detail.total_whitelist_mint += quantity;
+    }
 
     // Event
     let event: BuyEvent = BuyEvent {

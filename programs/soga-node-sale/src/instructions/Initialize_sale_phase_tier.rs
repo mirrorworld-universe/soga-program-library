@@ -21,12 +21,7 @@ use crate::events::{
     InitializeSalePhaseTierEvent
 };
 
-use crate::utils::{
-    check_signing_authority,
-    check_tier_id,
-    check_tier_id_out_of_range,
-    check_value_is_zero,
-};
+use crate::utils::{check_signing_authority, check_tier_id, check_tier_id_out_of_range, check_value_is_zero, check_whitelist_quantity};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, sale_phase_name: String, tier_id: String)]
@@ -37,40 +32,40 @@ pub struct InitializeSalePhaseTierInputAccounts<'info> {
     pub signing_authority: Signer<'info>,
 
     #[account(
-    mut,
-    seeds = [
-    SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_name.as_ref(),
-    ],
-    bump = _sale_phase_detail_bump,
+        mut,
+        seeds = [
+        SOGA_NODE_SALE_PHASE_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_name.as_ref(),
+        ],
+        bump = _sale_phase_detail_bump,
     )]
     pub sale_phase_detail: Box<Account<'info, SogaNodeSalePhaseDetailAccount>>,
 
     #[account(
-    init,
-    payer = payer,
-    space = SogaNodeSalePhaseTierDetailAccount::space(),
-    seeds = [
-    SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_detail.key().as_ref(),
-    tier_id.as_ref()
-    ],
-    bump,
+        init,
+        payer = payer,
+        space = SogaNodeSalePhaseTierDetailAccount::space(),
+        seeds = [
+        SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_detail.key().as_ref(),
+        tier_id.as_ref()
+        ],
+        bump,
     )]
     pub sale_phase_tier_detail: Box<Account<'info, SogaNodeSalePhaseTierDetailAccount>>,
 
     #[account(
-    init,
-    payer = payer,
-    seeds = [
-    COLLECTION_ACCOUNT_PREFIX.as_ref(),
-    sale_phase_tier_detail.key().as_ref(),
-    ],
-    bump,
-    mint::decimals = 0,
-    mint::authority = sale_phase_tier_detail.key(),
-    mint::freeze_authority = sale_phase_tier_detail.key(),
-    mint::token_program = token_program,
+        init,
+        payer = payer,
+        seeds = [
+        COLLECTION_ACCOUNT_PREFIX.as_ref(),
+        sale_phase_tier_detail.key().as_ref(),
+        ],
+        bump,
+        mint::decimals = 0,
+        mint::authority = sale_phase_tier_detail.key(),
+        mint::freeze_authority = sale_phase_tier_detail.key(),
+        mint::token_program = token_program,
     )]
     pub collection_mint_account: Box<InterfaceAccount<'info, Mint>>,
 
@@ -83,11 +78,11 @@ pub struct InitializeSalePhaseTierInputAccounts<'info> {
     pub collection_master_edition: AccountInfo<'info>,
 
     #[account(
-    init,
-    payer = payer,
-    associated_token::mint = collection_mint_account,
-    associated_token::authority = sale_phase_tier_detail,
-    associated_token::token_program = token_program,
+        init,
+        payer = payer,
+        associated_token::mint = collection_mint_account,
+        associated_token::authority = sale_phase_tier_detail,
+        associated_token::token_program = token_program,
     )]
     pub collection_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
@@ -106,6 +101,7 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
                                          _sale_phase_detail_bump: u8, sale_phase_name: String,
                                          tier_id: String, price: u64, quantity: u64, mint_limit: u64,
                                          collection_name: String, collection_symbol: String, collection_url: String,
+                                         whitelist_quantity: u64,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -120,6 +116,8 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
     check_value_is_zero(quantity as usize)?;
 
     check_value_is_zero(mint_limit as usize)?;
+
+    check_whitelist_quantity(whitelist_quantity, quantity)?;
 
     check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
 
@@ -226,6 +224,7 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
     sale_phase_tier_detail.collection_mint_address = ctx.accounts.collection_mint_account.key();
     sale_phase_tier_detail.price = price;
     sale_phase_tier_detail.quantity = quantity;
+    sale_phase_tier_detail.whitelist_quantity = whitelist_quantity;
     sale_phase_tier_detail.mint_limit = mint_limit;
     sale_phase_tier_detail.buy_enable = true;
     sale_phase_tier_detail.buy_with_token_enable = true;
@@ -244,6 +243,7 @@ pub fn handle_initialize_sale_phase_tier(ctx: Context<InitializeSalePhaseTierInp
         price,
         quantity,
         mint_limit,
+        whitelist_quantity,
     };
 
     emit!(event);

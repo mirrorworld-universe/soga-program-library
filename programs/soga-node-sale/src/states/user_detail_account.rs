@@ -20,6 +20,8 @@ pub struct UserDetailAccount {
     pub total_discount: u64,
 
     pub total_orders: u64,
+
+    pub total_whitelist_mint: u64,
 }
 
 impl UserDetailAccount {
@@ -33,5 +35,6 @@ impl UserDetailAccount {
             + 8 // total_payment
             + 8 // total_discount
             + 8 // total_orders
+            + 8 // total_whitelist_mint
     }
 }

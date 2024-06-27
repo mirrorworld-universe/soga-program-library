@@ -15,4 +15,6 @@ pub struct InitializeSalePhaseTierEvent {
     pub quantity: u64,
 
     pub mint_limit: u64,
+
+    pub whitelist_quantity: u64,
 }

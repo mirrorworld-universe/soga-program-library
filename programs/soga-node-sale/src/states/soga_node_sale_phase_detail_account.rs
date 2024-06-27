@@ -44,6 +44,8 @@ pub struct SogaNodeSalePhaseDetailAccount {
     pub symbol: String,
 
     pub metadata_base_uri: String,
+
+    pub total_whitelist_mint: u64,
 }
 
 impl SogaNodeSalePhaseDetailAccount {
@@ -69,5 +71,6 @@ impl SogaNodeSalePhaseDetailAccount {
             + 20 // name
             + 20 // symbol
             + 100 // metadata_base_uri
+            + 8 // total_whitelist_mint
     }
 }

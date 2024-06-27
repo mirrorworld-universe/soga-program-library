@@ -26,7 +26,7 @@ use crate::events::{
     BuyWithTokenEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount};
+use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -156,7 +156,9 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_payment_receiver(sale_phase_detail.payment_receiver, payment_receiver.key())?;
 
-    if !is_whitelist {
+    if is_whitelist {
+        check_token_whitelist_quantity_out_of_range(sale_phase_tier_detail.total_whitelist_mint + quantity, sale_phase_tier_detail.whitelist_quantity)?;
+    } else {
         check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
     }
 
@@ -325,6 +327,13 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     user_tier_detail.total_discount += full_discount_amount_in_usd;
     user_tier_detail.total_discount += half_discount_amount_in_usd;
     user_tier_detail.last_block_timestamp = timestamp;
+
+    if is_whitelist {
+        sale_phase_detail.total_whitelist_mint += quantity;
+        sale_phase_tier_detail.total_whitelist_mint += quantity;
+        user_detail.total_whitelist_mint += quantity;
+        user_tier_detail.total_whitelist_mint += quantity;
+    }
 
     // Event
     let event: BuyWithTokenEvent = BuyWithTokenEvent {

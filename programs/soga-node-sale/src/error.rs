@@ -29,11 +29,14 @@ pub enum SogaNodeSaleError {
     #[msg("Invalid token id")]
     InvalidTokenId,
 
-    #[msg("token id out of range")]
+    #[msg("Token id out of range")]
     TokenIdOutOfRange,
 
-    #[msg("token quantity out of range")]
+    #[msg("Token quantity out of range")]
     TokenQuantityOutOfRange,
+
+    #[msg("Token whitelist quantity out of range")]
+    TokenWhitelistQuantityOutOfRange,
 
     #[msg("Mint limit exceeded")]
     MintLimitExceeded,
@@ -85,4 +88,7 @@ pub enum SogaNodeSaleError {
 
     #[msg("Order is filled")]
     OrderIsFilled,
+
+    #[msg("Invalid whitelist quantity")]
+    InvalidWhitelistQuantity,
 }
