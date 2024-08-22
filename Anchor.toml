@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.localnet]
 soga-node-sale = "4cQkDBqFZmuiuwsQnbrFEU5kcRUTCYS1agegC3yLVYQq"
+soga-raffle-ticket = "GeYppgZZK83wKvfbwpnuipDENcYkw4uabZqvfHWf6Rfq"
 
 [registry]
 url = "https://api.apr.dev"
@@ -40,14 +41,11 @@ url = "https://api.devnet.solana.com"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899
 
-# SOL/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
 address = "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE"
 
-# USDT/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
 address = "HT2PLQBcG5EiCcNSaMHAjSgd9F98ecpATbk4Sk5oYuM"
 
-# USDC/USD Pyth Sponsored Feeds Address
 [[test.validator.clone]]
 address = "Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"
