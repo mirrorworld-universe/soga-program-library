@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
-use anchor_spl::associated_token::{AssociatedToken};
+use anchor_spl::token_interface::{Mint};
 
 use crate::states::{
     TICKET_CONFIG_ACCOUNT_PREFIX,
@@ -13,7 +12,9 @@ use crate::states::{
     USER_PAYMENT_CONFIG_ACCOUNT_PREFIX,
     UserPaymentConfigAccount
 };
-use crate::utils::{check_exceed_ticket_winner_limit, check_is_payment_enable, check_is_ticket_purchase_enable, check_signing_authority, check_user_ticket_quantity, check_value_is_zero};
+use crate::utils::{check_exceed_ticket_winner_limit, check_signing_authority, check_user_ticket_quantity, check_value_is_zero};
+
+use crate::events::AddTicketWinnerEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, _payment_config_bump: u8, _user_config_bump: u8, _user_payment_config_bump: u8)]
@@ -112,7 +113,16 @@ pub fn handle_add_ticket_winner(ctx: Context<AddWinnerTicketInputAccounts>, tick
     user_payment_config.last_block_timestamp = timestamp;
     user_payment_config.total_win_tickets += quantity;
 
-    // TODO: Add Event
+    // Event
+    let event: AddTicketWinnerEvent = AddTicketWinnerEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        user: ctx.accounts.user.key(),
+        quantity,
+    };
+
+    emit!(event);
 
     Ok(())
 }

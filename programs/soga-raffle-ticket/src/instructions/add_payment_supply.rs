@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
-use anchor_spl::associated_token::{AssociatedToken};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
 
 use crate::states::{
     TICKET_CONFIG_ACCOUNT_PREFIX,
@@ -9,7 +8,9 @@ use crate::states::{
     PAYMENT_CONFIG_ACCOUNT_PREFIX,
     PaymentConfigAccount,
 };
-use crate::utils::{check_is_payment_enable, check_signing_authority, check_value_is_zero};
+use crate::utils::{check_is_payment_enable, check_value_is_zero};
+
+use crate::events::AddPaymentSupplyEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, _payment_config_bump: u8)]
@@ -89,7 +90,16 @@ pub fn handle_add_payment_supply(ctx: Context<AddPaymentSupplyInputAccounts>, ti
     payment_config.current_balance += amount;
     payment_config.total_added_supply += amount;
 
-    // TODO: Add Event
+    // Event
+    let event: AddPaymentSupplyEvent = AddPaymentSupplyEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        supply_provider: ctx.accounts.supply_provider.key(),
+        amount
+    };
+
+    emit!(event);
 
     Ok(())
 }

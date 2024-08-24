@@ -8,9 +8,6 @@ pub enum SogaRaffleTicketError {
     #[msg("Invalid signing authority")]
     InvalidSigningAuthority,
 
-    #[msg("Invalid price feed address")]
-    InvalidPriceFeedAddress,
-
     #[msg("Value is zero")]
     ValueIsZero,
 

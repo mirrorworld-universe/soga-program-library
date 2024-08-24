@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
-use anchor_spl::associated_token::{AssociatedToken};
+use anchor_spl::token_interface::{ Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
 
 use crate::states::{
     TICKET_CONFIG_ACCOUNT_PREFIX,
@@ -13,7 +12,9 @@ use crate::states::{
     USER_PAYMENT_CONFIG_ACCOUNT_PREFIX,
     UserPaymentConfigAccount
 };
-use crate::utils::{check_is_payment_enable, check_is_ticket_purchase_enable, check_signing_authority, check_value_is_zero};
+use crate::utils::{check_is_payment_enable, check_is_payment_ticket_purchase_enable, check_is_ticket_purchase_enable, check_value_is_zero};
+
+use crate::events::BuyTicketEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, _payment_config_bump: u8)]
@@ -104,7 +105,7 @@ pub fn handle_buy_ticket(ctx: Context<BuyTicketInputAccounts>, ticket_config_nam
     // Checks
     check_is_ticket_purchase_enable(ticket_config.ticket_purchase_enable)?;
     check_is_payment_enable(payment_config.enable)?;
-    check_is_ticket_purchase_enable(payment_config.ticket_purchase_enable)?;
+    check_is_payment_ticket_purchase_enable(payment_config.ticket_purchase_enable)?;
     check_value_is_zero(quantity as usize)?;
 
     let purchase_amount: u64 = quantity * payment_config.ticket_price;
@@ -140,7 +141,18 @@ pub fn handle_buy_ticket(ctx: Context<BuyTicketInputAccounts>, ticket_config_nam
     user_payment_config.total_tickets += quantity;
     user_payment_config.total_purchase_amount += purchase_amount;
 
-    // TODO: Add Event
+    // Event
+    let event: BuyTicketEvent = BuyTicketEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        user: ctx.accounts.user.key(),
+        quantity,
+        ticket_price: payment_config.ticket_price,
+        purchase_amount,
+    };
+
+    emit!(event);
 
     Ok(())
 }

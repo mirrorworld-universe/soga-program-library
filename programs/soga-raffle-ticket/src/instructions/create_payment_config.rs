@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use anchor_spl::associated_token::{AssociatedToken};
 
 use crate::states::{
@@ -10,6 +10,8 @@ use crate::states::{
     PaymentConfigAccount,
 };
 use crate::utils::{check_signing_authority, check_value_is_zero};
+
+use crate::events::CreatePaymentConfigEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8)]
@@ -65,7 +67,7 @@ pub struct CreatePaymentConfigInputAccounts<'info> {
 pub fn handle_create_payment_config(ctx: Context<CreatePaymentConfigInputAccounts>, ticket_config_name: String, _ticket_config_bump: u8, ticket_price: u64, refund_amount: u64) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
-    let ticket_config: &Box<Account<TicketConfigAccount>>  = &ctx.accounts.ticket_config;
+    let ticket_config: &Box<Account<TicketConfigAccount>> = &ctx.accounts.ticket_config;
 
     // Checks
     check_signing_authority(ticket_config.signing_authority.key(), ctx.accounts.signing_authority.key())?;
@@ -73,7 +75,7 @@ pub fn handle_create_payment_config(ctx: Context<CreatePaymentConfigInputAccount
     check_value_is_zero(refund_amount as usize)?;
 
 
-    let payment_config: &mut Box<Account<PaymentConfigAccount>>  = &mut ctx.accounts.payment_config;
+    let payment_config: &mut Box<Account<PaymentConfigAccount>> = &mut ctx.accounts.payment_config;
     payment_config.last_block_timestamp = timestamp;
     payment_config.mint = ctx.accounts.token_mint_account.key();
     payment_config.enable = true;
@@ -82,7 +84,16 @@ pub fn handle_create_payment_config(ctx: Context<CreatePaymentConfigInputAccount
     payment_config.ticket_purchase_enable = true;
     payment_config.ticket_refund_enable = true;
 
-    // TODO: Add Event
+    // Event
+    let event: CreatePaymentConfigEvent = CreatePaymentConfigEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        ticket_price,
+        refund_amount,
+    };
+
+    emit!(event);
 
     Ok(())
 }

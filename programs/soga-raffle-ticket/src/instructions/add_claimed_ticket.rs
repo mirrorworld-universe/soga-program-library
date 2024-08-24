@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{TokenInterface};
-
 use crate::states::{
     TICKET_CONFIG_ACCOUNT_PREFIX,
     TicketConfigAccount,
@@ -9,6 +7,8 @@ use crate::states::{
     UserConfigAccount,
 };
 use crate::utils::{check_signing_authority, check_ticket_claim};
+
+use crate::events::AddClaimedWinnerEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, _user_config_bump: u8)]
@@ -70,7 +70,14 @@ pub fn handle_add_claimed_ticket(ctx: Context<AddClaimedTicketInputAccounts>, ti
     user_config.last_block_timestamp = timestamp;
     user_config.total_win_claimed_tickets += 1;
 
-    // TODO: Add Event
+    // Event
+    let event: AddClaimedWinnerEvent = AddClaimedWinnerEvent {
+        timestamp,
+        ticket_config_name,
+        user: ctx.accounts.user.key(),
+    };
+
+    emit!(event);
 
     Ok(())
 }

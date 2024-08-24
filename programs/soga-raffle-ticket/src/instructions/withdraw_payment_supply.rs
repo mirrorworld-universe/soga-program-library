@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
 use anchor_spl::associated_token::{AssociatedToken};
 
 use crate::states::{
@@ -10,6 +10,8 @@ use crate::states::{
     PaymentConfigAccount,
 };
 use crate::utils::{check_is_payment_enable, check_payment_supply, check_signing_authority, check_value_is_zero};
+
+use crate::events::WithdrawPaymentSupplyEvent;
 
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, payment_config_bump: u8)]
@@ -73,9 +75,9 @@ pub struct WithdrawPaymentSupplyInputAccounts<'info> {
 pub fn handle_withdraw_payment_supply(ctx: Context<WithdrawPaymentSupplyInputAccounts>, ticket_config_name: String, _ticket_config_bump: u8, payment_config_bump: u8, amount: u64) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
-    let payment_config: &Box<Account<PaymentConfigAccount>>  = &ctx.accounts.payment_config;
+    let payment_config: &Box<Account<PaymentConfigAccount>> = &ctx.accounts.payment_config;
 
-    let ticket_config: &Box<Account<TicketConfigAccount>>  = &ctx.accounts.ticket_config;
+    let ticket_config: &Box<Account<TicketConfigAccount>> = &ctx.accounts.ticket_config;
 
     // Checks
     check_signing_authority(ticket_config.signing_authority.key(), ctx.accounts.signing_authority.key())?;
@@ -106,12 +108,21 @@ pub fn handle_withdraw_payment_supply(ctx: Context<WithdrawPaymentSupplyInputAcc
     let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
     transfer_checked(cpi_context, amount, ctx.accounts.token_mint_account.decimals)?;
 
-    let payment_config: &mut Box<Account<PaymentConfigAccount>>  = &mut ctx.accounts.payment_config;
+    let payment_config: &mut Box<Account<PaymentConfigAccount>> = &mut ctx.accounts.payment_config;
     payment_config.last_block_timestamp = timestamp;
     payment_config.current_balance -= amount;
     payment_config.total_withdraw_supply += amount;
 
-    // TODO: Add Event
+    // Event
+    let event: WithdrawPaymentSupplyEvent = WithdrawPaymentSupplyEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        receiver: ctx.accounts.receiver.key(),
+        amount,
+    };
+
+    emit!(event);
 
     Ok(())
 }

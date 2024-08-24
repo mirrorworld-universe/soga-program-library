@@ -25,6 +25,173 @@ import {
 } from '@solana/spl-token'
 import {assert} from "chai";
 
+const CreateTicketConfigEventName = "CreateTicketConfigEvent";
+
+interface CreateTicketConfigEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    signingAuthority: PublicKey,
+
+    winnerTicketLimit: BN
+}
+
+const UpdateTicketConfigEventName = "UpdateTicketConfigEvent";
+
+interface UpdateTicketConfigEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    winnerTicketLimit: BN,
+
+    ticketPurchaseEnable: boolean,
+
+    ticketRefundEnable: boolean
+}
+
+const CreatePaymentConfigEventName = "CreatePaymentConfigEvent";
+
+interface CreatePaymentConfigEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    ticketPrice: BN,
+
+    refundAmount: BN
+}
+
+const UpdatePaymentConfigEventName = "UpdatePaymentConfigEvent";
+
+interface UpdatePaymentConfigEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    ticketPrice: BN,
+
+    refundAmount: BN,
+
+    enable: boolean,
+
+    ticketPurchaseEnable: boolean,
+
+    ticketRefundEnable: boolean
+}
+
+const AddPaymentSupplyEventName = "AddPaymentSupplyEvent";
+
+interface AddPaymentSupplyEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    supplyProvider: PublicKey,
+
+    amount: BN
+}
+
+const WithdrawPaymentSupplyEventName = "WithdrawPaymentSupplyEvent";
+
+interface WithdrawPaymentSupplyEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    receiver: PublicKey,
+
+    amount: BN
+}
+
+const BuyTicketEventName = "BuyTicketEvent";
+
+interface BuyTicketEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    user: PublicKey,
+
+    quantity: BN,
+
+    ticketPrice: BN,
+
+    purchaseAmount: BN
+}
+
+const AddTicketWinnerEventName = "AddTicketWinnerEvent";
+
+interface AddTicketWinnerEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    user: PublicKey,
+
+    quantity: BN,
+}
+
+const AddClaimedWinnerEventName = "AddClaimedWinnerEvent";
+
+interface AddClaimedWinnerEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    user: PublicKey,
+}
+
+const RefundTicketEventName = "RefundTicketEvent";
+
+interface RefundTicketEvent {
+    timestamp: BN,
+
+    ticketConfigName: string,
+
+    tokenMintAccount: PublicKey,
+
+    user: PublicKey,
+
+    refundTicketsQuantity: BN,
+
+    ticketRefundAmount: BN,
+
+    totalTicketRefundAmount: BN
+}
+
+const handleCreateTicketConfigEvent = (ev: CreateTicketConfigEvent) => console.log(`${CreateTicketConfigEventName} ==> `, ev);
+
+const handleUpdateTicketConfigEvent = (ev: UpdateTicketConfigEvent) => console.log(`${UpdateTicketConfigEventName} ==> `, ev);
+
+const handleCreatePaymentConfigEvent = (ev: CreatePaymentConfigEvent) => console.log(`${CreatePaymentConfigEventName} ==> `, ev);
+
+const handleUpdatePaymentConfigEvent = (ev: UpdatePaymentConfigEvent) => console.log(`${UpdatePaymentConfigEventName} ==> `, ev);
+
+const handleAddPaymentSupplyEvent = (ev: AddPaymentSupplyEvent) => console.log(`${AddPaymentSupplyEventName} ==> `, ev);
+
+const handleWithdrawPaymentSupplyEvent = (ev: WithdrawPaymentSupplyEvent) => console.log(`${WithdrawPaymentSupplyEventName} ==> `, ev);
+
+const handleBuyTicketEvent = (ev: BuyTicketEvent) => console.log(`${BuyTicketEventName} ==> `, ev);
+
+const handleAddTicketWinnerEvent = (ev: AddTicketWinnerEvent) => console.log(`${AddTicketWinnerEventName} ==> `, ev);
+
+const handleAddClaimedWinnerEvent = (ev: AddClaimedWinnerEvent) => console.log(`${AddClaimedWinnerEventName} ==> `, ev);
+
+const handleRefundTicketEvent = (ev: RefundTicketEvent) => console.log(`${RefundTicketEventName} ==> `, ev);
 
 const SOGA_RAFFLE_TICKET_CONFIG_ACCOUNT_PREFIX: string = "CONFIG";
 const TICKET_CONFIG_ACCOUNT_PREFIX: string = "TICKET";
@@ -105,6 +272,19 @@ describe("soga_raffle_ticket", () => {
     let connection = anchor.AnchorProvider.env().connection;
 
 
+    // Setup Events
+    const createTicketConfigEventListener = sogaRaffleTicket.addEventListener(CreateTicketConfigEventName, handleCreateTicketConfigEvent);
+    const updateTicketConfigEventListener = sogaRaffleTicket.addEventListener(UpdateTicketConfigEventName, handleUpdateTicketConfigEvent);
+    const createPaymentConfigEventListener = sogaRaffleTicket.addEventListener(CreatePaymentConfigEventName, handleCreatePaymentConfigEvent);
+    const updatePaymentConfigEventListener = sogaRaffleTicket.addEventListener(UpdatePaymentConfigEventName, handleUpdatePaymentConfigEvent);
+    const addPaymentSupplyEventListener = sogaRaffleTicket.addEventListener(AddPaymentSupplyEventName, handleAddPaymentSupplyEvent);
+    const withdrawPaymentSupplyEventListener = sogaRaffleTicket.addEventListener(WithdrawPaymentSupplyEventName, handleWithdrawPaymentSupplyEvent);
+    const buyTicketEventListener = sogaRaffleTicket.addEventListener(BuyTicketEventName, handleBuyTicketEvent);
+    const addTicketWinnerEventListener = sogaRaffleTicket.addEventListener(AddTicketWinnerEventName, handleAddTicketWinnerEvent);
+    const addClaimedWinnerEventListener = sogaRaffleTicket.addEventListener(AddClaimedWinnerEventName, handleAddClaimedWinnerEvent);
+    const refundTicketEventListener = sogaRaffleTicket.addEventListener(RefundTicketEventName, handleRefundTicketEvent);
+
+
     it("setup signers accounts", async () => {
         await connection.requestAirdrop(signingAuthorityKeypair.publicKey, 20 * LAMPORTS_PER_SOL);
         await delay(delayTimeCount);
@@ -145,22 +325,6 @@ describe("soga_raffle_ticket", () => {
         tokenMintAccountTwo = await createMint(anchor.AnchorProvider.env().connection, signingAuthorityKeypair, signingAuthorityKeypair.publicKey, signingAuthorityKeypair.publicKey, 6)
         console.log("token mint account two: ", tokenMintAccountTwo.toBase58());
         await delay(delayTimeCount);
-
-        // userAPaymentTokenAccount = await getAssociatedTokenAddress(paymentTokenMintAccount, userAKeypair.publicKey);
-        // console.log("userA PaymentTokenAccount: ", userAPaymentTokenAccount.toBase58());
-        //
-        // userBPaymentTokenAccount = await getAssociatedTokenAddress(paymentTokenMintAccount, userBKeypair.publicKey);
-        // console.log("userB PaymentTokenAccount: ", userBPaymentTokenAccount.toBase58());
-        //
-        // priceReceiverPaymentTokenAccount = await getAssociatedTokenAddress(paymentTokenMintAccount, priceReceiverKeypair.publicKey);
-        // console.log("priceReceiverPaymentTokenAccount: ", priceReceiverPaymentTokenAccount.toBase58());
-        //
-        // fullDiscountReceiverPaymentTokenAccount = await getAssociatedTokenAddress(paymentTokenMintAccount, fullReceiverKeypair.publicKey);
-        // console.log("fullDiscountReceiverPaymentTokenAccount: ", fullDiscountReceiverPaymentTokenAccount.toBase58());
-        //
-        // halfDiscountPaymentTokenAccount = await getAssociatedTokenAddress(paymentTokenMintAccount, halfReceiverKeypair.publicKey);
-        // console.log("halfDiscountPaymentTokenAccount: ", halfDiscountPaymentTokenAccount.toBase58());
-
 
         await createAssociatedTokenAccount(
             anchor.AnchorProvider.env().connection, // connection
@@ -1325,8 +1489,18 @@ describe("soga_raffle_ticket", () => {
         assert(userConfigPdaData.totalWinClaimedTickets.toNumber() === 3, "9");
     });
 
-    // it("Remove Events", async () => {
-    // });
+    it("Remove Events", async () => {
+        await sogaRaffleTicket.removeEventListener(createTicketConfigEventListener);
+        await sogaRaffleTicket.removeEventListener(updateTicketConfigEventListener);
+        await sogaRaffleTicket.removeEventListener(createPaymentConfigEventListener);
+        await sogaRaffleTicket.removeEventListener(updatePaymentConfigEventListener);
+        await sogaRaffleTicket.removeEventListener(addPaymentSupplyEventListener);
+        await sogaRaffleTicket.removeEventListener(withdrawPaymentSupplyEventListener);
+        await sogaRaffleTicket.removeEventListener(buyTicketEventListener);
+        await sogaRaffleTicket.removeEventListener(addTicketWinnerEventListener);
+        await sogaRaffleTicket.removeEventListener(addClaimedWinnerEventListener);
+        await sogaRaffleTicket.removeEventListener(refundTicketEventListener);
+    });
 
 });
 

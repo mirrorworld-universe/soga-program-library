@@ -8,6 +8,8 @@ use crate::states::{
 };
 use crate::utils::{check_main_signing_authority, check_value_is_zero};
 
+use crate::events::CreateTicketConfigEvent;
+
 #[derive(Accounts)]
 #[instruction(_config_bump: u8, ticket_config_name: String)]
 pub struct CreateTicketInputAccounts<'info> {
@@ -52,14 +54,22 @@ pub fn handle_create_ticket_config(ctx: Context<CreateTicketInputAccounts>, _con
     check_main_signing_authority(config.main_signing_authority.key(), ctx.accounts.main_signing_authority.key())?;
     check_value_is_zero(winner_ticket_limit as usize)?;
 
-    let ticket_config: &mut Box<Account<TicketConfigAccount>>  = &mut ctx.accounts.ticket_config;
+    let ticket_config: &mut Box<Account<TicketConfigAccount>> = &mut ctx.accounts.ticket_config;
     ticket_config.last_block_timestamp = timestamp;
     ticket_config.signing_authority = ctx.accounts.signing_authority.key();
     ticket_config.ticket_purchase_enable = true;
     ticket_config.ticket_refund_enable = false;
     ticket_config.winner_ticket_limit = winner_ticket_limit;
 
-    // TODO: Add Event
+    // Event
+    let event: CreateTicketConfigEvent = CreateTicketConfigEvent {
+        timestamp,
+        ticket_config_name,
+        signing_authority: ctx.accounts.signing_authority.key(),
+        winner_ticket_limit,
+    };
+
+    emit!(event);
 
     Ok(())
 }

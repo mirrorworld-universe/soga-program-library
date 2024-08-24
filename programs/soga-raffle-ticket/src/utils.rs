@@ -18,15 +18,6 @@ pub fn check_signing_authority(signing_authority_from_account: Pubkey, signing_a
     Ok(())
 }
 
-
-pub fn check_price_feed(value_from_account: Pubkey, value_from_input_accounts: Pubkey) -> Result<()> {
-    if value_from_account != value_from_input_accounts {
-        return Err(SogaRaffleTicketError::InvalidPriceFeedAddress.into());
-    }
-
-    Ok(())
-}
-
 pub fn check_value_is_zero(value: usize) -> Result<()> {
     if value <= 0 {
         return Err(SogaRaffleTicketError::ValueIsZero.into());

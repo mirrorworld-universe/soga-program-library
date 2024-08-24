@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
-use anchor_spl::associated_token::{AssociatedToken};
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked};
 
 use crate::states::{
     TICKET_CONFIG_ACCOUNT_PREFIX,
@@ -13,7 +12,9 @@ use crate::states::{
     USER_PAYMENT_CONFIG_ACCOUNT_PREFIX,
     UserPaymentConfigAccount,
 };
-use crate::utils::{check_is_payment_enable, check_is_payment_ticket_refund_enable, check_is_ticket_purchase_enable, check_is_ticket_refund_enable, check_payment_supply, check_signing_authority, check_value_is_zero};
+use crate::utils::{check_is_payment_enable, check_is_payment_ticket_refund_enable, check_is_ticket_refund_enable, check_payment_supply, check_value_is_zero};
+
+use crate::events::RefundTicketEvent;
 
 #[derive(Accounts)]
 #[instruction(
@@ -160,7 +161,18 @@ pub fn handle_refund_ticket(ctx: Context<RefundTicketInputAccounts>, ticket_conf
     user_payment_config.total_refunded_tickets += refund_ticket_quantity;
     user_payment_config.total_refund_amount += refund_amount;
 
-    // TODO: Add Event
+    // Event
+    let event: RefundTicketEvent = RefundTicketEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        user: ctx.accounts.user.key(),
+        refund_tickets_quantity: refund_ticket_quantity,
+        ticket_refund_amount: payment_config.refund_amount,
+        total_ticket_refund_amount: refund_amount,
+    };
+
+    emit!(event);
 
     Ok(())
 }

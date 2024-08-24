@@ -9,6 +9,8 @@ use crate::states::{
 };
 use crate::utils::{check_signing_authority, check_value_is_zero};
 
+use crate::events::UpdatePaymentConfigEvent;
+
 #[derive(Accounts)]
 #[instruction(ticket_config_name: String, _ticket_config_bump: u8, _payment_config_bump: u8)]
 pub struct UpdatePaymentConfigInputAccounts<'info> {
@@ -63,7 +65,19 @@ pub fn handle_update_payment_config(ctx: Context<UpdatePaymentConfigInputAccount
     payment_config.ticket_purchase_enable = ticket_purchase_enable;
     payment_config.ticket_refund_enable = ticket_refund_enable;
 
-    // TODO: Add Event
+    // Event
+    let event: UpdatePaymentConfigEvent = UpdatePaymentConfigEvent {
+        timestamp,
+        ticket_config_name,
+        token_mint_account: ctx.accounts.token_mint_account.key(),
+        ticket_price,
+        refund_amount,
+        enable,
+        ticket_purchase_enable,
+        ticket_refund_enable,
+    };
+
+    emit!(event);
 
     Ok(())
 }
