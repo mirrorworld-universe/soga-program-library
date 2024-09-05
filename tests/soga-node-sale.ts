@@ -275,6 +275,20 @@ interface UpdateSalePhasePaymentTokenEvent {
     enable: boolean,
 }
 
+interface CreateOrderReceiptEvent {
+    timestamp: BN,
+
+    salePhaseName: string,
+
+    tierId: string,
+
+    orderId: string,
+
+    user: PublicKey,
+
+    quantity: BN,
+}
+
 //// Event Name
 const InitializeSalePhaseEventName = "InitializeSalePhaseEvent";
 const InitializeSalePhaseTierEventName = "InitializeSalePhaseTierEvent";
@@ -286,6 +300,7 @@ const BuyEventName = "BuyEvent";
 const BuyWithTokenEventName = "BuyWithTokenEvent";
 const AirdropEventName = "AirdropEvent";
 const FillOrderEventName = "FillOrderEvent";
+const CreateOrderReceiptEventName = "CreateOrderReceiptEvent";
 
 const handleInitializeSalePhaseEvent = (ev: InitializeSalePhaseEvent) =>
     console.log(`${InitializeSalePhaseEventName} ==> `, ev);
@@ -316,6 +331,9 @@ const handleAirdropEvent = (ev: AirdropEvent) =>
 
 const handleFillOrderEvent = (ev: FillOrderEvent) =>
     console.log(`${FillOrderEventName} ==> `, ev);
+
+const handleCreateOrderReceiptEvent = (ev: CreateOrderReceiptEvent) =>
+    console.log(`${CreateOrderReceiptEventName} ==> `, ev);
 
 
 const SOGA_NODE_SALE_CONFIG_ACCOUNT_PREFIX: string = "CONFIG";
@@ -403,6 +421,7 @@ describe("soga_node_sale", () => {
     const buyEventListener = program.addEventListener(BuyEventName, handleBuyEvent);
     const buyWithTokenEventListener = program.addEventListener(BuyWithTokenEventName, handleBuyWithTokenEvent);
     const fillOrderEventListener = program.addEventListener(FillOrderEventName, handleFillOrderEvent);
+    const createOrderReceiptEventListener = program.addEventListener(CreateOrderReceiptEventName, handleCreateOrderReceiptEvent);
 
     it("setup signers accounts", async () => {
         await connection.requestAirdrop(signingAuthorityKeypair.publicKey, 20 * LAMPORTS_PER_SOL);
@@ -1654,6 +1673,310 @@ describe("soga_node_sale", () => {
 
     });
 
+    it("Create order receipt", async () => {
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        const tierId: number = 1;
+        const orderId: number = 1;
+
+        const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
+            tierId.toString(), sogaNodeSalePhaseOnePDA);
+        console.log("Node Sale Phase one tier two: ", nodeSalePhaseTierPda.toBase58());
+
+        const [userDetailPda] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, kolKeypair.publicKey);
+        console.log("User detail pda: ", userDetailPda.toBase58());
+
+        const [userPhaseTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX, userDetailPda, nodeSalePhaseTierPda);
+        console.log("User tier detail pda: ", userPhaseTierDetailPda.toBase58());
+
+        const [orderPda] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
+
+        const [salePhasePaymentTokenDetailPda, salePhasePaymentTokenDetailBump] = getSogaNodeSalePhasePaymentTokenDetailAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_ACCOUNT_PREFIX,
+            phaseOne, sogaNodeSalePhaseOnePDA, paymentTokenMintAccount);
+
+        const tx = await program.methods.createOrderReceipt(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
+            phaseOne, tierId.toString(), orderId.toString(), new BN(2), true)
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                user: kolKeypair.publicKey,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+                salePhaseTierDetail: nodeSalePhaseTierPda,
+                userDetail: userDetailPda,
+                userTierDetail: userPhaseTierDetailPda,
+                orderDetail: orderPda,
+                systemProgram: SystemProgram.programId,
+                rent: SYSVAR_RENT_PUBKEY
+            })
+            .signers([signingAuthorityKeypair])
+            .rpc({});
+
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
+
+    });
+
+    it("Create order receipt - 2", async () => {
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        const tierId: number = 2;
+        const orderId: number = 2;
+
+        const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
+            tierId.toString(), sogaNodeSalePhaseOnePDA);
+        console.log("Node Sale Phase one tier two: ", nodeSalePhaseTierPda.toBase58());
+
+        const [userDetailPda] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, kolKeypair.publicKey);
+        console.log("User detail pda: ", userDetailPda.toBase58());
+
+        const [userPhaseTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX, userDetailPda, nodeSalePhaseTierPda);
+        console.log("User tier detail pda: ", userPhaseTierDetailPda.toBase58());
+
+        const [orderPda] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
+
+        const [salePhasePaymentTokenDetailPda, salePhasePaymentTokenDetailBump] = getSogaNodeSalePhasePaymentTokenDetailAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_PAYMENT_TOKEN_ACCOUNT_PREFIX,
+            phaseOne, sogaNodeSalePhaseOnePDA, paymentTokenMintAccount);
+
+        const tx = await program.methods.createOrderReceipt(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump,
+            phaseOne, tierId.toString(), orderId.toString(), new BN(2), false)
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                user: kolKeypair.publicKey,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+                salePhaseTierDetail: nodeSalePhaseTierPda,
+                userDetail: userDetailPda,
+                userTierDetail: userPhaseTierDetailPda,
+                orderDetail: orderPda,
+                systemProgram: SystemProgram.programId,
+                rent: SYSVAR_RENT_PUBKEY
+            })
+            .signers([signingAuthorityKeypair])
+            .rpc({});
+
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
+
+    });
+
+    it("Fill Order Four", async () => {
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        const tierId: number = 1;
+        const tokenId: number = 7;
+        const orderId = 1;
+
+        const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
+            tierId.toString(), sogaNodeSalePhaseOnePDA);
+        console.log("Node Sale Phase one tier two: ", nodeSalePhaseTierPda.toBase58());
+
+        const [nodeSalePhaseTierCollectionPda, nodeSalePhaseTierCollectionBump] = getSogaNodeSalePhaseDetailTierCollectionAccountPdaAndBump(program.programId, COLLECTION_ACCOUNT_PREFIX,
+            nodeSalePhaseTierPda);
+        console.log("Node Sale Phase one tier two collection: ", nodeSalePhaseTierCollectionPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMasterPda = getMasterPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Master: ", nodeSalePhaseTierCollectionMasterPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMetadataPda = getMetadataPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Metadata: ", nodeSalePhaseTierCollectionMetadataPda.toBase58());
+        //
+        // const nodeSalePhaseTierCollectionTokenAccount = await getAssociatedTokenAddress(nodeSalePhaseTierCollectionPda, nodeSalePhaseTierPda, true, TOKEN_PROGRAM_ID);
+        // console.log("Node Sale Phase one tier two collection token account: ", nodeSalePhaseTierCollectionTokenAccount.toBase58());
+
+        const [userDetailPda, userDetailBump] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX,
+            sogaNodeSalePhaseOnePDA, kolKeypair.publicKey);
+        console.log("User detail pda: ", userDetailPda.toBase58());
+
+        // const [userPhaseTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX,
+        //     userDetailPda, nodeSalePhaseTierPda);
+        // console.log("User tier detail pda: ", userPhaseTierDetailPda.toBase58());
+
+        const [orderPda, orderBump] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
+
+
+        const [nodeMintAccountPda] = getNodeMintAccount(program.programId, NODE_ACCOUNT_PREFIX,
+            nodeSalePhaseTierCollectionPda, tokenId.toString());
+        console.log("Node Mint Account Pda: ", nodeMintAccountPda.toBase58());
+
+        const nodeMintAccountMasterPda = getMasterPda(nodeMintAccountPda);
+        console.log("node mint account master pda: ", nodeMintAccountMasterPda.toBase58());
+
+        const nodeMintAccountMetadataPda = getMetadataPda(nodeMintAccountPda)
+        console.log("node mint account metadata pda: ", nodeMintAccountMetadataPda.toBase58());
+
+
+        const nodeUserTokenAccount = await getAssociatedTokenAddress(nodeMintAccountPda, kolKeypair.publicKey, true, TOKEN_PROGRAM_ID);
+        console.log("node user token account: ", nodeUserTokenAccount.toBase58());
+
+
+        const tx = await program.methods.fileOrder(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump, nodeSalePhaseTierCollectionBump,
+            userDetailBump, orderBump,
+            phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                user: kolKeypair.publicKey,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+                salePhaseTierDetail: nodeSalePhaseTierPda,
+                userDetail: userDetailPda,
+                orderDetail: orderPda,
+                collectionMintAccount: nodeSalePhaseTierCollectionPda,
+                nodeMintAccount: nodeMintAccountPda,
+                userTokenAccount: nodeUserTokenAccount,
+                tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+                rent: SYSVAR_RENT_PUBKEY
+            }).remainingAccounts([
+                {
+                    pubkey: nodeSalePhaseTierCollectionMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeSalePhaseTierCollectionMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                }
+            ])
+
+            .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
+            .signers([signingAuthorityKeypair])
+            .rpc({skipPreflight: true});
+
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
+
+    });
+
+    it("Fill Order Five", async () => {
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        const tierId: number = 2;
+        const tokenId: number = 4;
+        const orderId = 2;
+
+        const [nodeSalePhaseTierPda, nodeSalePhaseTierBump] = getSogaNodeSalePhaseDetailTierAccountPdaAndBump(program.programId, SOGA_NODE_SALE_PHASE_TIER_DETAIL_ACCOUNT_PREFIX,
+            tierId.toString(), sogaNodeSalePhaseOnePDA);
+        console.log("Node Sale Phase one tier two: ", nodeSalePhaseTierPda.toBase58());
+
+        const [nodeSalePhaseTierCollectionPda, nodeSalePhaseTierCollectionBump] = getSogaNodeSalePhaseDetailTierCollectionAccountPdaAndBump(program.programId, COLLECTION_ACCOUNT_PREFIX,
+            nodeSalePhaseTierPda);
+        console.log("Node Sale Phase one tier two collection: ", nodeSalePhaseTierCollectionPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMasterPda = getMasterPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Master: ", nodeSalePhaseTierCollectionMasterPda.toBase58());
+
+        const nodeSalePhaseTierCollectionMetadataPda = getMetadataPda(nodeSalePhaseTierCollectionPda);
+        console.log("Node Sale Phase one tier two collection Metadata: ", nodeSalePhaseTierCollectionMetadataPda.toBase58());
+        //
+        // const nodeSalePhaseTierCollectionTokenAccount = await getAssociatedTokenAddress(nodeSalePhaseTierCollectionPda, nodeSalePhaseTierPda, true, TOKEN_PROGRAM_ID);
+        // console.log("Node Sale Phase one tier two collection token account: ", nodeSalePhaseTierCollectionTokenAccount.toBase58());
+
+        const [userDetailPda, userDetailBump] = getUserAccountPdaAndBump(program.programId, USER_DETAIL_ACCOUNT_PREFIX,
+            sogaNodeSalePhaseOnePDA, kolKeypair.publicKey);
+        console.log("User detail pda: ", userDetailPda.toBase58());
+
+        // const [userPhaseTierDetailPda] = getUserTierAccountPdaAndBump(program.programId, USER_TIER_DETAIL_ACCOUNT_PREFIX,
+        //     userDetailPda, nodeSalePhaseTierPda);
+        // console.log("User tier detail pda: ", userPhaseTierDetailPda.toBase58());
+
+        const [orderPda, orderBump] = getOrderDetailAccountPdaAndBump(program.programId, ORDER_DETAIL_ACCOUNT_PREFIX, sogaNodeSalePhaseOnePDA, userDetailPda, orderId.toString());
+
+
+        const [nodeMintAccountPda] = getNodeMintAccount(program.programId, NODE_ACCOUNT_PREFIX,
+            nodeSalePhaseTierCollectionPda, tokenId.toString());
+        console.log("Node Mint Account Pda: ", nodeMintAccountPda.toBase58());
+
+        const nodeMintAccountMasterPda = getMasterPda(nodeMintAccountPda);
+        console.log("node mint account master pda: ", nodeMintAccountMasterPda.toBase58());
+
+        const nodeMintAccountMetadataPda = getMetadataPda(nodeMintAccountPda)
+        console.log("node mint account metadata pda: ", nodeMintAccountMetadataPda.toBase58());
+
+
+        const nodeUserTokenAccount = await getAssociatedTokenAddress(nodeMintAccountPda, kolKeypair.publicKey, true, TOKEN_PROGRAM_ID);
+        console.log("node user token account: ", nodeUserTokenAccount.toBase58());
+
+
+        const tx = await program.methods.fileOrder(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump, nodeSalePhaseTierCollectionBump,
+            userDetailBump, orderBump,
+            phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                user: kolKeypair.publicKey,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+                salePhaseTierDetail: nodeSalePhaseTierPda,
+                userDetail: userDetailPda,
+                orderDetail: orderPda,
+                collectionMintAccount: nodeSalePhaseTierCollectionPda,
+                nodeMintAccount: nodeMintAccountPda,
+                userTokenAccount: nodeUserTokenAccount,
+                tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+                rent: SYSVAR_RENT_PUBKEY
+            }).remainingAccounts([
+                {
+                    pubkey: nodeSalePhaseTierCollectionMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeSalePhaseTierCollectionMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMetadataPda,
+                    isWritable: true,
+                    isSigner: false
+                },
+                {
+                    pubkey: nodeMintAccountMasterPda,
+                    isWritable: true,
+                    isSigner: false
+                }
+            ])
+
+            .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
+            .signers([signingAuthorityKeypair])
+            .rpc({skipPreflight: true});
+
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        console.log(await program.account.orderDetailAccount.fetch(orderPda.toBase58()));
+
+    });
+
     it("Remove Events", async () => {
         await delay(2000);
 
@@ -1667,6 +1990,7 @@ describe("soga_node_sale", () => {
         await program.removeEventListener(buyEventListener);
         await program.removeEventListener(buyWithTokenEventListener);
         await program.removeEventListener(fillOrderEventListener);
+        await program.removeEventListener(createOrderReceiptEventListener);
     });
 
 });

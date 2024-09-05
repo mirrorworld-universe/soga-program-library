@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/programs/pyth/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/programs/soga-node-sale/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/programs/soga-program-library/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/programs/soga-raffle-ticket/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
