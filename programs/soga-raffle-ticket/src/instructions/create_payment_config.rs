@@ -22,7 +22,6 @@ pub struct CreatePaymentConfigInputAccounts<'info> {
     pub signing_authority: Signer<'info>,
 
     #[account(
-        mut,
         seeds = [
         TICKET_CONFIG_ACCOUNT_PREFIX.as_ref(),
         ticket_config_name.as_ref(),
