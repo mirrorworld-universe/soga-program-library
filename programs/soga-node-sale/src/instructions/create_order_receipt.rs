@@ -182,7 +182,7 @@ pub fn handle_create_order_receipt(ctx: Context<CreateOrderReceiptInputAccounts>
 
     let user_tier_detail: &mut Box<Account<UserTierDetailAccount>> = &mut ctx.accounts.user_tier_detail;
     user_tier_detail.total_mint += quantity;
-    user_tier_detail.total_buy += quantity;
+    user_tier_detail.total_airdrop += quantity;
     user_tier_detail.last_block_timestamp = timestamp;
 
     // Event
