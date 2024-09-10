@@ -1,6 +1,5 @@
 use std::ops::{Add, Mul, Sub};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
 use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2, Price, get_feed_id_from_hex};
 
