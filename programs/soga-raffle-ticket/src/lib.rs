@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+pub mod meta;
+
 use instructions::*;
 
 mod instructions;
