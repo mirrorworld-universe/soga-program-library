@@ -1,7 +1,14 @@
+name = "soga-program-library"
+version = "0.0.1"
+edition = "2024"
+resolver = "2"
+repository = "https://github.com/mirrorworld-universe/soga-program-library"
+authors = ["Sonic SVM <maintainers@sonic.game>"]
+description = "HyperFuse Node Sale and Raffle Ticket Programs Program"
+license-file = "LICENSE"
+
 [workspace]
-members = [
-    "programs/*"
-]
+members = ["programs/*"]
 resolver = "2"
 
 [profile.release]
