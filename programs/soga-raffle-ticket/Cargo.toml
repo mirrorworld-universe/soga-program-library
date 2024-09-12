@@ -1,7 +1,7 @@
 [package]
 name = "soga-raffle-ticket"
 version = "0.1.0"
-description = "Created with Anchor"
+description = "HyperFuse Raffle Ticket Program"
 edition = "2021"
 
 [lib]
@@ -17,5 +17,5 @@ default = []
 
 [dependencies]
 anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
-anchor-spl = {version = "0.29.0", features = ["metadata"]}
+anchor-spl = { version = "0.29.0", features = ["metadata"] }
 solana-security-txt = { version = "1.0.2", features = [] }

@@ -16,8 +16,9 @@ url = "https://api.apr.dev"
 # wallet = "/Users/bilalafzal/.config/solana/id.json"
 
 [provider]
-cluster = "Localnet"
-wallet = "/Users/jonasrct/.config/solana/mw/node-sale/mainnet/program_authority.json"
+cluster = "Devnet"
+wallet = "/Users/jonasrct/.config/solana/mw/node-sale/devnet/program_authority.json"
+
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
