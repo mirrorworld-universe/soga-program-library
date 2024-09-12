@@ -16,7 +16,7 @@ url = "https://api.apr.dev"
 # wallet = "/Users/bilalafzal/.config/solana/id.json"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "/Users/jonasrct/.config/solana/mw/node-sale/devnet/program_authority.json"
 
 
