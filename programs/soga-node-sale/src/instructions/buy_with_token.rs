@@ -1,6 +1,5 @@
 use std::ops::{Add, Mul, Sub};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 
 use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2, Price, get_feed_id_from_hex};
 
@@ -192,7 +191,8 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     let pyth_expo: u64 = 10_u64.pow(price.exponent.abs().try_into().unwrap());
     let pyth_price: u64 = u64::try_from(price.price).unwrap();
-    let price_in_lamport: u64 = LAMPORTS_PER_SOL.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd).unwrap();
+    let decimal_base_lamport: u64 = 10_u64.pow(sale_phase_payment_token_detail.decimals.try_into().unwrap());
+    let price_in_lamport: u64 = decimal_base_lamport.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd).unwrap();
 
     let mut user_discount_in_usd: u64 = 0;
     let mut user_discount_in_lamport: u64 = 0;
@@ -272,7 +272,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
     order_detail.is_completed = false;
     order_detail.quantity = quantity;
     order_detail.total_payment_in_usd = price_in_usd;
-    order_detail.total_user_discount = after_user_discount_in_usd;
+    order_detail.total_user_discount_in_usd = after_user_discount_in_usd;
     order_detail.total_discount_in_usd = full_discount_amount_in_usd.add(half_discount_amount_in_usd);
     order_detail.total_payment = price_in_lamport;
     order_detail.total_user_discount = after_user_discount_in_lamport;

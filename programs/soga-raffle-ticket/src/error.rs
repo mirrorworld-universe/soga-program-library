@@ -40,4 +40,7 @@ pub enum SogaRaffleTicketError {
 
     #[msg("Invalid ticket claim")]
     InvalidTicketClaim,
+
+    #[msg("Invalid refund amount")]
+    InvalidRefundAmount,
 }

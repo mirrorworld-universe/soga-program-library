@@ -264,7 +264,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     order_detail.is_completed = false;
     order_detail.quantity = quantity;
     order_detail.total_payment_in_usd = price_in_usd;
-    order_detail.total_user_discount = after_user_discount_in_usd;
+    order_detail.total_user_discount_in_usd = after_user_discount_in_usd;
     order_detail.total_discount_in_usd = full_discount_amount_in_usd.add(half_discount_amount_in_usd);
     order_detail.total_payment = price_in_lamport;
     order_detail.total_user_discount = after_user_discount_in_lamport;

@@ -106,3 +106,11 @@ pub fn check_ticket_claim(from_account: u64, from_param: u64) -> Result<()> {
     Ok(())
 }
 
+pub fn check_refund_amount(ticket_price: u64, refund_amount: u64) -> Result<()> {
+    if ticket_price < refund_amount {
+        return Err(SogaRaffleTicketError::InvalidRefundAmount.into());
+    }
+
+    Ok(())
+}
+

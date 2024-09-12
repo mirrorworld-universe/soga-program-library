@@ -88,8 +88,7 @@ pub fn handle_add_ticket_winner(ctx: Context<AddWinnerTicketInputAccounts>, tick
     // Checks
     check_signing_authority(ticket_config.signing_authority.key(), ctx.accounts.signing_authority.key())?;
     check_value_is_zero(quantity as usize)?;
-
-    check_exceed_ticket_winner_limit(ticket_config.winner_ticket_limit, quantity)?;
+    
     check_exceed_ticket_winner_limit(ticket_config.winner_ticket_limit,ticket_config.total_winner_ticket + quantity)?;
 
     check_user_ticket_quantity(user_config.total_tickets, user_config.total_win_tickets + quantity)?;

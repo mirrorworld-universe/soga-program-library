@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+pub mod meta;
+
 use instructions::*;
 
 mod error;
@@ -263,6 +265,28 @@ pub mod soga_node_sale {
             tier_id,
             token_id,
             order_id,
+        )
+    }
+
+    pub fn create_order_receipt(
+        ctx: Context<CreateOrderReceiptInputAccounts>,
+        _sale_phase_detail_bump: u8,
+        _sale_phase_tier_detail_bump: u8,
+        sale_phase_name: String,
+        tier_id: String,
+        order_id: String,
+        quantity: u64,
+        follow_tiers: bool,
+    ) -> Result<()> {
+        handle_create_order_receipt(
+            ctx,
+            _sale_phase_detail_bump,
+            _sale_phase_tier_detail_bump,
+            sale_phase_name,
+            tier_id,
+            order_id,
+            quantity,
+            follow_tiers,
         )
     }
 }

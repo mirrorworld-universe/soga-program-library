@@ -9,7 +9,7 @@ use crate::states::{
     PAYMENT_CONFIG_ACCOUNT_PREFIX,
     PaymentConfigAccount,
 };
-use crate::utils::{check_signing_authority, check_value_is_zero};
+use crate::utils::{check_refund_amount, check_signing_authority, check_value_is_zero};
 
 use crate::events::CreatePaymentConfigEvent;
 
@@ -22,7 +22,6 @@ pub struct CreatePaymentConfigInputAccounts<'info> {
     pub signing_authority: Signer<'info>,
 
     #[account(
-        mut,
         seeds = [
         TICKET_CONFIG_ACCOUNT_PREFIX.as_ref(),
         ticket_config_name.as_ref(),
@@ -73,6 +72,7 @@ pub fn handle_create_payment_config(ctx: Context<CreatePaymentConfigInputAccount
     check_signing_authority(ticket_config.signing_authority.key(), ctx.accounts.signing_authority.key())?;
     check_value_is_zero(ticket_price as usize)?;
     check_value_is_zero(refund_amount as usize)?;
+    check_refund_amount(ticket_price, refund_amount)?;
 
 
     let payment_config: &mut Box<Account<PaymentConfigAccount>> = &mut ctx.accounts.payment_config;

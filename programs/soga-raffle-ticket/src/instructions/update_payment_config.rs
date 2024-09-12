@@ -7,7 +7,7 @@ use crate::states::{
     PAYMENT_CONFIG_ACCOUNT_PREFIX,
     PaymentConfigAccount,
 };
-use crate::utils::{check_signing_authority, check_value_is_zero};
+use crate::utils::{check_refund_amount, check_signing_authority, check_value_is_zero};
 
 use crate::events::UpdatePaymentConfigEvent;
 
@@ -55,6 +55,7 @@ pub fn handle_update_payment_config(ctx: Context<UpdatePaymentConfigInputAccount
     check_signing_authority(ticket_config.signing_authority.key(), ctx.accounts.signing_authority.key())?;
     check_value_is_zero(ticket_price as usize)?;
     check_value_is_zero(refund_amount as usize)?;
+    check_refund_amount(ticket_price, refund_amount)?;
 
 
     let payment_config: &mut Box<Account<PaymentConfigAccount>> = &mut ctx.accounts.payment_config;
