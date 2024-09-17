@@ -19,6 +19,8 @@ pub struct UpdateKeyInputAccounts<'info> {
 
     pub signing_authority: Signer<'info>,
 
+    pub back_authority: Signer<'info>,
+
     #[account(
         seeds = [
         SOGA_NODE_SALE_CONFIG_ACCOUNT_PREFIX.as_ref()
@@ -40,16 +42,17 @@ pub struct UpdateKeyInputAccounts<'info> {
 }
 
 pub fn handle_update_key(ctx: Context<UpdateKeyInputAccounts>, _sale_config_bump: u8, _sale_phase_name: String, _sale_phase_detail_bump: u8) -> Result<()> {
-    // let timestamp = Clock::get().unwrap().unix_timestamp;
-    //
-    // let sale_config: &Box<Account<SogaNodeSaleConfigAccount>> = &ctx.accounts.sale_config;
-    //
-    // // Checks
-    // check_main_signing_authority(sale_config.main_signing_authority.key(), ctx.accounts.main_signing_authority.key())?;
-    //
-    // let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
-    // sale_phase_detail.last_block_timestamp = timestamp;
-    // sale_phase_detail.signing_authority = ctx.accounts.signing_authority.key();
+    let timestamp = Clock::get().unwrap().unix_timestamp;
+
+    let sale_config: &Box<Account<SogaNodeSaleConfigAccount>> = &ctx.accounts.sale_config;
+
+    // Checks
+    check_main_signing_authority(sale_config.main_signing_authority.key(), ctx.accounts.main_signing_authority.key())?;
+
+    let sale_phase_detail: &mut Box<Account<SogaNodeSalePhaseDetailAccount>> = &mut ctx.accounts.sale_phase_detail;
+    sale_phase_detail.last_block_timestamp = timestamp;
+    sale_phase_detail.signing_authority = ctx.accounts.signing_authority.key();
+    sale_phase_detail.back_authority = ctx.accounts.back_authority.key();
 
     Ok(())
 }

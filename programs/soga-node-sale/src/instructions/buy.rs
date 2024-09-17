@@ -21,7 +21,7 @@ use crate::events::{
     BuyEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range};
+use crate::utils::{check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_phase_buy, check_phase_tier_buy, check_invalid_discount, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range, check_back_authority};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -30,7 +30,7 @@ pub struct BuyInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub signing_authority: Signer<'info>,
+    pub back_authority: Signer<'info>,
 
     #[account(mut)]
     pub user_payer: Signer<'info>,
@@ -131,7 +131,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 
     check_phase_tier_buy(sale_phase_tier_detail.buy_enable)?;
 
-    check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+    check_back_authority(sale_phase_detail.back_authority, ctx.accounts.back_authority.key())?;
 
     check_price_feed(sale_phase_detail.price_feed_address, ctx.accounts.price_update.key())?;
 

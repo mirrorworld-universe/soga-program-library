@@ -18,6 +18,14 @@ pub fn check_signing_authority(signing_authority_from_account: Pubkey, signing_a
     Ok(())
 }
 
+pub fn check_back_authority(back_authority_from_account: Pubkey, back_authority_from_input_accounts: Pubkey) -> Result<()> {
+    if back_authority_from_account != back_authority_from_input_accounts {
+        return Err(SogaNodeSaleError::InvalidBackAuthority.into());
+    }
+
+    Ok(())
+}
+
 pub fn check_tier_id(current_tier_id_from_account: u32, current_tier_id_from_param: u32) -> Result<()> {
     if current_tier_id_from_account != current_tier_id_from_param {
         return Err(SogaNodeSaleError::InvalidTierId.into());

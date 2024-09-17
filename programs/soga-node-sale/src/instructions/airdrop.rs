@@ -25,17 +25,7 @@ use crate::states::{
 
 use crate::events::{AirdropEvent};
 
-use crate::utils::{
-    check_signing_authority,
-    check_phase_tier_collection,
-    check_phase_tier_is_completed,
-    check_token_id,
-    check_mint_limit,
-    check_phase_airdrop,
-    check_phase_tier_airdrop,
-    check_token_id_out_of_range,
-    check_tier_id
-};
+use crate::utils::{check_phase_tier_collection, check_phase_tier_is_completed, check_token_id, check_mint_limit, check_phase_airdrop, check_phase_tier_airdrop, check_token_id_out_of_range, check_tier_id, check_back_authority};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -44,7 +34,7 @@ pub struct AirdropInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub signing_authority: Signer<'info>,
+    pub back_authority: Signer<'info>,
 
     /// CHECK: user
     #[account(mut)]
@@ -164,7 +154,7 @@ pub fn handle_airdrop<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Airdrop
     check_phase_airdrop(sale_phase_detail.airdrop_enable)?;
     check_phase_tier_airdrop(sale_phase_tier_detail.airdrop_enable)?;
 
-    check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+    check_back_authority(sale_phase_detail.back_authority, ctx.accounts.back_authority.key())?;
 
     check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
 

@@ -25,7 +25,7 @@ use crate::events::{
     BuyWithTokenEvent
 };
 
-use crate::utils::{check_signing_authority, check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range};
+use crate::utils::{check_price_feed, check_payment_receiver, check_phase_tier_is_completed, check_token_quantity_out_of_range, check_invalid_discount, check_payment_token_mint_account, check_payment_token, check_phase_buy_with_token, check_phase_tier_buy_with_token, check_quantity, check_tier_id, check_order_id, check_mint_limit_with_quantity, check_value_is_zero, check_invalid_user_discount, check_token_whitelist_quantity_out_of_range, check_back_authority};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -34,7 +34,7 @@ pub struct BuyWithTokenInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub signing_authority: Signer<'info>,
+    pub back_authority: Signer<'info>,
 
     #[account(mut)]
     pub user_payer: Signer<'info>,
@@ -149,7 +149,7 @@ pub fn handle_buy_with_token<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, 
 
     check_payment_token_mint_account(sale_phase_payment_token_detail.mint, payment_token_mint_account.key())?;
 
-    check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+    check_back_authority(sale_phase_detail.back_authority, ctx.accounts.back_authority.key())?;
 
     check_price_feed(sale_phase_payment_token_detail.price_feed_address, ctx.accounts.price_update.key())?;
 

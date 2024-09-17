@@ -10,7 +10,7 @@ mod instructions;
 mod states;
 mod utils;
 
-declare_id!("8bN6BdztrKwNrxqq6BmRjAqM2bQT7wtMvXkY5JuR6sst");
+declare_id!("4cQkDBqFZmuiuwsQnbrFEU5kcRUTCYS1agegC3yLVYQq");
 
 #[program]
 pub mod soga_node_sale {

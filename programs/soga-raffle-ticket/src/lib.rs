@@ -10,7 +10,7 @@ mod instructions;
 mod states;
 mod utils;
 
-declare_id!("4FrgeLwpX7EUf4nriVP6TvTiCoi4WVUQ7wPVw8hESK7B");
+declare_id!("GeYppgZZK83wKvfbwpnuipDENcYkw4uabZqvfHWf6Rfq");
 
 #[program]
 pub mod soga_raffle_ticket {

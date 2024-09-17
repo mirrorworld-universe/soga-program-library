@@ -8,6 +8,9 @@ pub enum SogaNodeSaleError {
     #[msg("Invalid signing authority")]
     InvalidSigningAuthority,
 
+    #[msg("Invalid back authority")]
+    InvalidBackAuthority,
+
     #[msg("Invalid tier id")]
     InvalidTierId,
 

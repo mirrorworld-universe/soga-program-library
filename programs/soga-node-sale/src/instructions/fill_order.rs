@@ -25,13 +25,7 @@ use crate::states::{
 
 use crate::events::{FillOrderEvent};
 
-use crate::utils::{
-    check_signing_authority,
-    check_phase_tier_collection,
-    check_order_token_id_filled,
-    check_order_token_id,
-    check_order_is_filled,
-};
+use crate::utils::{check_phase_tier_collection, check_order_token_id_filled, check_order_token_id, check_order_is_filled, check_back_authority};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, _collection_mint_account_bump: u8,
@@ -40,7 +34,7 @@ pub struct FillOrderInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub signing_authority: Signer<'info>,
+    pub back_authority: Signer<'info>,
 
     /// CHECK: user
     #[account(mut)]
@@ -153,7 +147,7 @@ pub fn handle_file_order<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Fill
     let order_detail: &Box<Account<OrderDetailAccount>> = &ctx.accounts.order_detail;
 
     // Checks
-    check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+    check_back_authority(sale_phase_detail.back_authority, ctx.accounts.back_authority.key())?;
     check_phase_tier_collection(sale_phase_tier_detail.collection_mint_address, ctx.accounts.collection_mint_account.key())?;
 
     check_order_is_filled(order_detail.is_completed)?;

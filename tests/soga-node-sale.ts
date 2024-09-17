@@ -348,6 +348,7 @@ const NODE_ACCOUNT_PREFIX: string = "NODE";
 
 const mainSigningAuthorityPubKey: PublicKey = anchor.AnchorProvider.env().wallet.publicKey;
 const signingAuthorityKeypair: Keypair = Keypair.generate();
+const backAuthorityKeypair: Keypair = Keypair.generate();
 const agencyKeypair: Keypair = Keypair.generate();
 const kolKeypair: Keypair = Keypair.generate();
 const userAKeypair: Keypair = Keypair.generate();
@@ -547,6 +548,7 @@ describe("soga_node_sale", () => {
                 payer: mainSigningAuthorityPubKey,
                 mainSigningAuthority: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 saleConfig: sogaNodeSaleConfigPDA,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 priceFeed: priceFeedSolAddress,
@@ -554,7 +556,7 @@ describe("soga_node_sale", () => {
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             })
-            .signers([signingAuthorityKeypair])
+            .signers([signingAuthorityKeypair, backAuthorityKeypair])
             .rpc();
         console.log("Your transaction signature", tx);
 
@@ -563,6 +565,7 @@ describe("soga_node_sale", () => {
         const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
 
         assert(salePhaseData.signingAuthority.toBase58() === signingAuthorityKeypair.publicKey.toBase58());
+        assert(salePhaseData.backAuthority.toBase58() === backAuthorityKeypair.publicKey.toBase58());
         assert(salePhaseData.paymentReceiver.toBase58() === priceReceiverKeypair.publicKey.toBase58());
         assert(salePhaseData.priceFeedAddress.toBase58() === priceFeedSolAddress.toBase58());
 
@@ -593,10 +596,11 @@ describe("soga_node_sale", () => {
                 payer: mainSigningAuthorityPubKey,
                 mainSigningAuthority: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 saleConfig: sogaNodeSaleConfigPDA,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
             })
-            .signers([signingAuthorityKeypair])
+            .signers([signingAuthorityKeypair, backAuthorityKeypair])
             .rpc({skipPreflight: true});
         console.log("Your transaction signature", tx);
 
@@ -605,6 +609,7 @@ describe("soga_node_sale", () => {
         const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
 
         assert(salePhaseData.signingAuthority.toBase58() === signingAuthorityKeypair.publicKey.toBase58());
+        assert(salePhaseData.backAuthority.toBase58() === backAuthorityKeypair.publicKey.toBase58());
     });
 
     it("Update Sale Phase One", async () => {
@@ -894,7 +899,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, 2000, true, 1000, false, false, 0)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
@@ -922,7 +927,7 @@ describe("soga_node_sale", () => {
                     isSigner: false
                 }
             ]).preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair, userBKeypair])
+            .signers([backAuthorityKeypair, userBKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -961,7 +966,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(2), true, 2000, true, 1000, true, true, 1000)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
@@ -989,7 +994,7 @@ describe("soga_node_sale", () => {
                     isSigner: false
                 }
             ]).preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair, userBKeypair])
+            .signers([backAuthorityKeypair, userBKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -1057,7 +1062,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(1), true, 2000, true, 1000, true, true, 1000)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
@@ -1125,7 +1130,7 @@ describe("soga_node_sale", () => {
                 createFullDiscountTokenAccount,
                 createHalfDiscountTokenAccount
             ])
-            .signers([signingAuthorityKeypair, userBKeypair])
+            .signers([backAuthorityKeypair, userBKeypair])
             .rpc({});
 
         console.log("Your transaction signature", tx);
@@ -1197,7 +1202,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(3), true, 2000, true, 1000, false, false, 0)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 userPayer: userBKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
@@ -1265,7 +1270,7 @@ describe("soga_node_sale", () => {
                 createFullDiscountTokenAccount,
                 createHalfDiscountTokenAccount
             ])
-            .signers([signingAuthorityKeypair, userBKeypair])
+            .signers([backAuthorityKeypair, userBKeypair])
             .rpc({});
 
         console.log("Your transaction signature", tx);
@@ -1335,7 +1340,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1373,7 +1378,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc();
 
         console.log("Your transaction signature", tx);
@@ -1435,7 +1440,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1473,7 +1478,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -1540,7 +1545,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1578,7 +1583,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -1645,7 +1650,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: userAKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1683,7 +1688,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -1720,7 +1725,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(2), true)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: kolKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1730,7 +1735,7 @@ describe("soga_node_sale", () => {
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             })
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({});
 
         console.log("Your transaction signature", tx);
@@ -1767,7 +1772,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), orderId.toString(), new BN(2), false)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: kolKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1777,7 +1782,7 @@ describe("soga_node_sale", () => {
                 systemProgram: SystemProgram.programId,
                 rent: SYSVAR_RENT_PUBKEY
             })
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({});
 
         console.log("Your transaction signature", tx);
@@ -1844,7 +1849,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: kolKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1882,7 +1887,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);
@@ -1949,7 +1954,7 @@ describe("soga_node_sale", () => {
             phaseOne, tierId.toString(), tokenId.toString(), orderId.toString())
             .accounts({
                 payer: mainSigningAuthorityPubKey,
-                signingAuthority: signingAuthorityKeypair.publicKey,
+                backAuthority: backAuthorityKeypair.publicKey,
                 user: kolKeypair.publicKey,
                 salePhaseDetail: sogaNodeSalePhaseOnePDA,
                 salePhaseTierDetail: nodeSalePhaseTierPda,
@@ -1987,7 +1992,7 @@ describe("soga_node_sale", () => {
             ])
 
             .preInstructions([ComputeBudgetProgram.setComputeUnitLimit({units: 1400_000})])
-            .signers([signingAuthorityKeypair])
+            .signers([backAuthorityKeypair])
             .rpc({skipPreflight: true});
 
         console.log("Your transaction signature", tx);

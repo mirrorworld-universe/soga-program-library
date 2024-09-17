@@ -9,6 +9,8 @@ pub struct SogaNodeSalePhaseDetailAccount {
 
     pub signing_authority: Pubkey,
 
+    pub back_authority: Pubkey,
+
     pub price_feed_address: Pubkey,
 
     pub price_feed_id: String,
@@ -53,6 +55,7 @@ impl SogaNodeSalePhaseDetailAccount {
         8 // default
             + 8 // last_block_timestamp
             + 32 // signing_authority
+            + 32 // back_authority
             + 32 // price_feed_address
             + 66 // price_feed_id
             + 32 // payment_receiver

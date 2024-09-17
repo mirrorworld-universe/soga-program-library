@@ -24,6 +24,8 @@ pub struct InitializeSalePhaseInputAccounts<'info> {
 
     pub signing_authority: Signer<'info>,
 
+    pub back_authority: Signer<'info>,
+
     pub price_feed: Account<'info, PriceUpdateV2>,
 
     /// CHECK: payment receiver
@@ -73,6 +75,7 @@ pub fn handle_initialize_sale_phase(ctx: Context<InitializeSalePhaseInputAccount
 
     sale_phase_detail.last_block_timestamp = timestamp;
     sale_phase_detail.signing_authority = ctx.accounts.signing_authority.key();
+    sale_phase_detail.back_authority = ctx.accounts.back_authority.key();
     sale_phase_detail.price_feed_address = ctx.accounts.price_feed.key();
     sale_phase_detail.price_feed_id = price_feed_id.clone();
     sale_phase_detail.payment_receiver = ctx.accounts.payment_receiver.key();

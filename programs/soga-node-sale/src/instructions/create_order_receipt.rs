@@ -17,7 +17,7 @@ use crate::events::{
     CreateOrderReceiptEvent
 };
 
-use crate::utils::{check_mint_limit_with_quantity, check_order_id, check_phase_tier_is_completed, check_quantity, check_signing_authority, check_tier_id, check_token_quantity_out_of_range, check_value_is_zero};
+use crate::utils::{check_back_authority, check_mint_limit_with_quantity, check_order_id, check_phase_tier_is_completed, check_quantity,  check_tier_id, check_token_quantity_out_of_range, check_value_is_zero};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8,
@@ -26,7 +26,7 @@ pub struct CreateOrderReceiptInputAccounts<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    pub signing_authority: Signer<'info>,
+    pub back_authority: Signer<'info>,
 
     /// CHECK: user
     pub user: AccountInfo<'info>,
@@ -112,7 +112,7 @@ pub fn handle_create_order_receipt(ctx: Context<CreateOrderReceiptInputAccounts>
     // Checks
     check_value_is_zero(quantity as usize)?;
 
-    check_signing_authority(sale_phase_detail.signing_authority, ctx.accounts.signing_authority.key())?;
+    check_back_authority(sale_phase_detail.back_authority, ctx.accounts.back_authority.key())?;
 
     if follow_tiers {
         check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;

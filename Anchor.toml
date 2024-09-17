@@ -5,19 +5,22 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-soga-node-sale = "8bN6BdztrKwNrxqq6BmRjAqM2bQT7wtMvXkY5JuR6sst"
-soga-raffle-ticket = "4FrgeLwpX7EUf4nriVP6TvTiCoi4WVUQ7wPVw8hESK7B"
+soga-node-sale = "4cQkDBqFZmuiuwsQnbrFEU5kcRUTCYS1agegC3yLVYQq"
+soga-raffle-ticket = "GeYppgZZK83wKvfbwpnuipDENcYkw4uabZqvfHWf6Rfq"
+
+#soga-node-sale = "8bN6BdztrKwNrxqq6BmRjAqM2bQT7wtMvXkY5JuR6sst"
+#soga-raffle-ticket = "4FrgeLwpX7EUf4nriVP6TvTiCoi4WVUQ7wPVw8hESK7B"
 
 [registry]
 url = "https://api.apr.dev"
 
-# [provider]
-# cluster = "Localnet"
-# wallet = "/Users/bilalafzal/.config/solana/id.json"
+ [provider]
+ cluster = "Localnet"
+ wallet = "/Users/bilalafzal/.config/solana/id.json"
 
-[provider]
-cluster = "Localnet"
-wallet = "/Users/jonasrct/.config/solana/mw/node-sale/devnet/program_authority.json"
+#[provider]
+#cluster = "Localnet"
+#wallet = "/Users/jonasrct/.config/solana/mw/node-sale/devnet/program_authority.json"
 
 
 [scripts]
