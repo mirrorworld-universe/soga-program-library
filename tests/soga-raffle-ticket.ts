@@ -479,6 +479,31 @@ describe("soga_raffle_ticket", () => {
         assert(ticketConfigPdaData.winnerTicketLimit.toNumber() === 2, "4");
     });
 
+    it("Update - soga raffle ticket", async () => {
+
+        const [ticketConfigPda, ticketConfigBump] = getTicketSaleConfigAccountPdaAndBump(sogaRaffleTicket.programId, TICKET_CONFIG_ACCOUNT_PREFIX, ticketConfigName);
+        console.log("Ticket Config Pda: ", ticketConfigPda.toBase58());
+
+        const tx = await sogaRaffleTicket.methods.updateKey(sogaRaffleTicketConfigBump, ticketConfigName, ticketConfigBump)
+            .accounts({
+                feeAndRentPayer: mainSigningAuthorityPubKey,
+                mainSigningAuthority: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                config: sogaRaffleTicketConfigPDA,
+                ticketConfig: ticketConfigPda
+            })
+            .signers([signingAuthorityKeypair])
+            .rpc();
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+
+        let ticketConfigPdaData = await sogaRaffleTicket.account.ticketConfigAccount.fetch(ticketConfigPda.toBase58());
+
+        assert(ticketConfigPdaData.signingAuthority.toBase58() === signingAuthorityKeypair.publicKey.toBase58(), "1");
+    });
+
     it("Update ticket sale config - soga raffle ticket", async () => {
         const [ticketConfigPda, ticketConfigBump] = getTicketSaleConfigAccountPdaAndBump(sogaRaffleTicket.programId, TICKET_CONFIG_ACCOUNT_PREFIX, ticketConfigName);
         console.log("Ticket Config Pda: ", ticketConfigPda.toBase58());

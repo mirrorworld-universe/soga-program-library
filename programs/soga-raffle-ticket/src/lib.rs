@@ -186,4 +186,8 @@ pub mod soga_raffle_ticket {
             _user_payment_config_bump,
         )
     }
+
+    pub fn update_key(ctx: Context<UpdateKeyInputAccounts>, _config_bump: u8, _ticket_config_name: String, _ticket_config_bump: u8) -> Result<()> {
+        handle_update_key(ctx, _config_bump, _ticket_config_name, _ticket_config_bump)
+    }
 }

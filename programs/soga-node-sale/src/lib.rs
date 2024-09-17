@@ -289,4 +289,8 @@ pub mod soga_node_sale {
             follow_tiers,
         )
     }
+
+    pub fn update_key(ctx: Context<UpdateKeyInputAccounts>, _sale_config_bump: u8, _sale_phase_name: String, _sale_phase_detail_bump: u8) -> Result<()> {
+        handle_update_key(ctx, _sale_config_bump, _sale_phase_name, _sale_phase_detail_bump)
+    }
 }

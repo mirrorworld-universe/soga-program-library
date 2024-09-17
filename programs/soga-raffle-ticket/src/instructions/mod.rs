@@ -9,6 +9,7 @@ pub use buy_ticket::*;
 pub use add_ticket_winner::*;
 pub use add_claimed_ticket::*;
 pub use refund_ticket::*;
+pub use update_key::*;
 
 pub mod initialize;
 pub mod create_ticket_config;
@@ -21,3 +22,4 @@ pub mod buy_ticket;
 pub mod add_ticket_winner;
 pub mod add_claimed_ticket;
 pub mod refund_ticket;
+pub mod update_key;

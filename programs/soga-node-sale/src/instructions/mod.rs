@@ -10,6 +10,7 @@ pub use update_sale_phase_payment_token::*;
 pub use buy_with_token::*;
 pub use fill_order::*;
 pub use create_order_receipt::*;
+pub use update_key::*;
 
 
 pub mod initialize;
@@ -25,3 +26,4 @@ pub mod buy_with_token;
 
 pub mod fill_order;
 pub mod create_order_receipt;
+pub mod update_key;

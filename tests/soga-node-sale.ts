@@ -586,6 +586,27 @@ describe("soga_node_sale", () => {
         assert(salePhaseData.metadataBaseUri === nft_url);
     });
 
+    it("Update Key Phase One", async () => {
+
+        const tx = await program.methods.updateKey(sogaNodeSaleConfigBump, phaseOne, sogaNodeSaleConfigBump)
+            .accounts({
+                payer: mainSigningAuthorityPubKey,
+                mainSigningAuthority: mainSigningAuthorityPubKey,
+                signingAuthority: signingAuthorityKeypair.publicKey,
+                saleConfig: sogaNodeSaleConfigPDA,
+                salePhaseDetail: sogaNodeSalePhaseOnePDA,
+            })
+            .signers([signingAuthorityKeypair])
+            .rpc({skipPreflight: true});
+        console.log("Your transaction signature", tx);
+
+        await delay(delayTimeCount);
+
+        const salePhaseData = await program.account.sogaNodeSalePhaseDetailAccount.fetch(sogaNodeSalePhaseOnePDA.toBase58());
+
+        assert(salePhaseData.signingAuthority.toBase58() === signingAuthorityKeypair.publicKey.toBase58());
+    });
+
     it("Update Sale Phase One", async () => {
 
         const tx = await program.methods.updateSalePhase(sogaNodeSalePhaseOneBump, phaseOne, nft_name, nft_symbol, nft_url, true, true, true, priceFeedIdSol)
