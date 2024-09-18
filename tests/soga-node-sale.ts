@@ -591,7 +591,7 @@ describe("soga_node_sale", () => {
 
     it("Update Key Phase One", async () => {
 
-        const tx = await program.methods.updateKey(sogaNodeSaleConfigBump, phaseOne, sogaNodeSaleConfigBump)
+        const tx = await program.methods.updateKey(sogaNodeSaleConfigBump, phaseOne, sogaNodeSalePhaseOneBump)
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 mainSigningAuthority: mainSigningAuthorityPubKey,
@@ -776,7 +776,7 @@ describe("soga_node_sale", () => {
 
         const tx = await program.methods.updateSalePhaseTier(sogaNodeSalePhaseOneBump, nodeSalePhaseTierBump, phaseOne, tierId.toString(),
             new BN(100), new BN(6),
-            true, true, true)
+            true, true, true, new BN(10))
             .accounts({
                 payer: mainSigningAuthorityPubKey,
                 signingAuthority: signingAuthorityKeypair.publicKey,
@@ -786,7 +786,7 @@ describe("soga_node_sale", () => {
                 rent: SYSVAR_RENT_PUBKEY
             })
             .signers([signingAuthorityKeypair])
-            .rpc();
+            .rpc({skipPreflight: true});
         console.log("Your transaction signature", tx);
 
         await delay(delayTimeCount);

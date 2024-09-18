@@ -161,6 +161,7 @@ pub mod soga_node_sale {
         buy_enable: bool,
         buy_with_token_enable: bool,
         airdrop_enable: bool,
+        whitelist_quantity: u64,
     ) -> Result<()> {
         handle_update_sale_phase_tier(
             ctx,
@@ -173,6 +174,7 @@ pub mod soga_node_sale {
             buy_enable,
             buy_with_token_enable,
             airdrop_enable,
+            whitelist_quantity,
         )
     }
 

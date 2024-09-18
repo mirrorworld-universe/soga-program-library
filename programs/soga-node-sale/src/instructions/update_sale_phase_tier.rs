@@ -7,7 +7,7 @@ use crate::states::{
 
 use crate::events::UpdateSalePhaseTierEvent;
 
-use crate::utils::{check_signing_authority, check_value_is_zero};
+use crate::utils::{check_signing_authority, check_value_is_zero, check_whitelist_quantity};
 
 #[derive(Accounts)]
 #[instruction(_sale_phase_detail_bump: u8, _sale_phase_tier_detail_bump: u8, sale_phase_name: String, tier_id: String)]
@@ -53,11 +53,15 @@ pub fn handle_update_sale_phase_tier(
     buy_enable: bool,
     buy_with_token_enable: bool,
     airdrop_enable: bool,
+    whitelist_quantity: u64,
 ) -> Result<()> {
     let timestamp = Clock::get().unwrap().unix_timestamp;
 
     let sale_phase_detail: &Box<Account<SogaNodeSalePhaseDetailAccount>> =
         &ctx.accounts.sale_phase_detail;
+
+    let sale_phase_tier_detail: &Box<Account<SogaNodeSalePhaseTierDetailAccount>> =
+        &ctx.accounts.sale_phase_tier_detail;
 
     // Checks
 
@@ -70,6 +74,8 @@ pub fn handle_update_sale_phase_tier(
         ctx.accounts.signing_authority.key(),
     )?;
 
+    check_whitelist_quantity(whitelist_quantity, sale_phase_tier_detail.quantity)?;
+
     let sale_phase_tier_detail: &mut Box<Account<SogaNodeSalePhaseTierDetailAccount>> =
         &mut ctx.accounts.sale_phase_tier_detail;
     sale_phase_tier_detail.last_block_timestamp = timestamp;
@@ -78,6 +84,7 @@ pub fn handle_update_sale_phase_tier(
     sale_phase_tier_detail.buy_enable = buy_enable;
     sale_phase_tier_detail.buy_with_token_enable = buy_with_token_enable;
     sale_phase_tier_detail.airdrop_enable = airdrop_enable;
+    sale_phase_tier_detail.whitelist_quantity = whitelist_quantity;
 
     // Event
     let event: UpdateSalePhaseTierEvent = UpdateSalePhaseTierEvent {
