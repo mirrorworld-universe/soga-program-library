@@ -99,7 +99,7 @@ pub struct BuyInputAccounts<'info> {
     )]
     pub order_detail: Box<Account<'info, OrderDetailAccount>>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
 
     pub system_program: Program<'info, System>,
 
