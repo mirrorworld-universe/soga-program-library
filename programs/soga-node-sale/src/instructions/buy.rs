@@ -161,7 +161,9 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 
 
     // Make Payment
-    let price_in_usd: u64 = sale_phase_tier_detail.price.mul(quantity);
+    let price_in_usd: u64 = sale_phase_tier_detail.price.mul(quantity).mul(10000);
+
+    let price_in_usd_flat: u64 = sale_phase_tier_detail.price.mul(quantity);
 
     let price_update = &mut ctx.accounts.price_update;
 
@@ -174,7 +176,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
 
     let pyth_expo: u64 = 10_u64.pow(price.exponent.abs().try_into().unwrap());
     let pyth_price: u64 = u64::try_from(price.price).unwrap();
-    let price_in_lamport: u64 = LAMPORTS_PER_SOL.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd).unwrap();
+    let price_in_lamport: u64 = LAMPORTS_PER_SOL.checked_mul(pyth_expo).unwrap().checked_div(pyth_price).unwrap().checked_mul(price_in_usd_flat).unwrap();
 
     let mut user_discount_in_usd: u64 = 0;
     let mut user_discount_in_lamport: u64 = 0;
