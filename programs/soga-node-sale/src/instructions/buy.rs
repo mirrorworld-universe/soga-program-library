@@ -140,7 +140,7 @@ pub fn handle_buy<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, BuyInputAcc
     if is_whitelist {
         check_token_whitelist_quantity_out_of_range(sale_phase_tier_detail.total_whitelist_mint + quantity, sale_phase_tier_detail.whitelist_quantity)?;
     } else {
-        check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
+        // check_tier_id(sale_phase_detail.total_completed_tiers + 1, tier_id_int)?;
     }
 
     check_phase_tier_is_completed(sale_phase_tier_detail.is_completed)?;
